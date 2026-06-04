@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PTV Journey Planner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary:       #003082;
+      --primary-mid:   #0052cc;
+      --primary-dark:  #001a52;
+      --accent:        #ffcd00;
+      --bg:            #f0f3f9;
+      --surface:       #ffffff;
+      --surface-2:     #f7f9fc;
+      --border:        #e2e8f0;
+      --text:          #1a202c;
+      --text-muted:    #64748b;
+      --text-light:    #94a3b8;
+      --train-color:   #1565c0;
+      --tram-color:    #2e7d32;
+      --bus-color:     #c62828;
+      --radius:        12px;
+      --shadow-sm:     0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow:        0 4px 16px rgba(0,0,0,0.07), 0 2px 6px rgba(0,0,0,0.04);
+      --shadow-lg:     0 12px 40px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Nav ───────────────────────────────────────────────────────── */
+    .app-nav {
+      display: flex; align-items: center; gap: 4px;
+      margin-bottom: 20px;
+    }
+    .nav-link {
+      color: rgba(255,255,255,0.65);
+      text-decoration: none;
+      font-size: 13px; font-weight: 500;
+      padding: 5px 10px; border-radius: 6px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .nav-link:hover, .nav-link.active { color: white; background: rgba(255,255,255,0.1); }
+    .nav-spacer { flex: 1; }
+    .nav-user {
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+      margin-right: 4px;
+    }
+    .nav-btn-ghost {
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.8);
+      font-size: 12px; font-weight: 600;
+      padding: 5px 12px; border-radius: 6px;
+      text-decoration: none; border: none;
+      cursor: pointer; font-family: inherit;
+      transition: background 0.15s;
+    }
+    .nav-btn-ghost:hover { background: rgba(255,255,255,0.18); }
+    .nav-btn-accent {
+      background: var(--accent);
+      color: var(--primary-dark);
+      font-size: 12px; font-weight: 700;
+      padding: 5px 12px; border-radius: 6px;
+      text-decoration: none;
+    }
+
+    /* ── Save banner ───────────────────────────────────────────────── */
+    .save-banner {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      display: none;
+      align-items: center;
+      gap: 12px;
+      box-shadow: var(--shadow-sm);
+    }
+    .save-banner-text {
+      font-size: 13px; font-weight: 600;
+      color: var(--text);
+      flex: 1;
+    }
+    .save-banner input {
+      padding: 7px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 7px;
+      font-family: inherit;
+      font-size: 13px; font-weight: 500;
+      color: var(--text);
+      outline: none;
+      width: 220px;
+      transition: border-color 0.2s;
+    }
+    .save-banner input:focus { border-color: var(--primary-mid); }
+    .save-banner-btn {
+      padding: 7px 16px;
+      background: var(--primary);
+      color: white;
+      border: none; border-radius: 7px;
+      font-family: inherit;
+      font-size: 13px; font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .save-banner-btn:hover { background: var(--primary-mid); }
+    .save-banner-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .save-success {
+      font-size: 13px; color: #15803d; font-weight: 600;
+      display: none;
+    }
+
+    /* ── Header ────────────────────────────────────────────────────── */
+    .app-header {
+      background: linear-gradient(140deg, var(--primary-dark) 0%, var(--primary) 55%, #0a4bba 100%);
+      padding: 0 24px;
+      position: relative;
+    }
+
+    .header-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 30px 0 36px;
+      position: relative; z-index: 1;
+    }
+
+    .brand {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 26px;
+    }
+    .brand-logo {
+      width: 38px; height: 38px;
+      background: var(--accent);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 800;
+      color: var(--primary-dark);
+      flex-shrink: 0;
+    }
+    .brand-text { line-height: 1; }
+    .brand-name {
+      font-size: 17px; font-weight: 700;
+      color: rgba(255,255,255,0.95);
+      letter-spacing: -0.3px;
+    }
+    .brand-name span { color: var(--accent); }
+    .brand-sub {
+      font-size: 11px; font-weight: 500;
+      color: rgba(255,255,255,0.45);
+      margin-top: 2px; letter-spacing: 0.3px;
+    }
+
+    .search-card {
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: var(--radius);
+      padding: 18px 20px 14px;
+    }
+    .search-label {
+      font-size: 11px; font-weight: 600;
+      color: rgba(255,255,255,0.5);
+      text-transform: uppercase; letter-spacing: 0.8px;
+      margin-bottom: 12px;
+    }
+
+    .form-row {
+      display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;
+    }
+    .form-group {
+      flex: 1; min-width: 200px;
+      position: relative;
+    }
+    .form-group label {
+      display: block;
+      font-size: 11px; font-weight: 600;
+      color: rgba(255,255,255,0.55);
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin-bottom: 5px;
+    }
+    .input-wrap { position: relative; }
+    .input-icon {
+      position: absolute; left: 11px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 13px;
+      pointer-events: none;
+      opacity: 0.5;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 10px 12px 10px 34px;
+      background: rgba(255,255,255,0.11);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px; font-weight: 500;
+      color: white;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .form-group input::placeholder { color: rgba(255,255,255,0.35); }
+    .form-group input:focus {
+      border-color: var(--accent);
+      background: rgba(255,255,255,0.16);
+    }
+
+    .search-btn {
+      padding: 10px 26px;
+      background: var(--accent);
+      color: var(--primary-dark);
+      border: none; border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px; font-weight: 700;
+      cursor: pointer;
+      height: 40px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+    }
+    .search-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(255,205,0,0.45);
+    }
+    .search-btn:active { transform: translateY(0); box-shadow: none; }
+    .search-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    /* Location button */
+    .loc-btn {
+      position: absolute; right: 8px; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none;
+      cursor: pointer;
+      font-size: 15px;
+      opacity: 0.45;
+      padding: 4px;
+      border-radius: 4px;
+      transition: opacity 0.15s;
+      line-height: 1;
+    }
+    .loc-btn:hover { opacity: 0.85; }
+    .loc-btn.loading { animation: spin 0.75s linear infinite; opacity: 0.6; }
+
+    /* Dropdown */
+    .dropdown {
+      position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: var(--shadow-lg);
+      z-index: 200;
+      max-height: 220px; overflow-y: auto;
+    }
+    .dropdown-item {
+      padding: 9px 14px;
+      cursor: pointer;
+      font-size: 13px; font-weight: 500;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 8px;
+      transition: background 0.1s;
+    }
+    .dropdown-item::before { content: '📍'; font-size: 11px; opacity: 0.6; }
+    .dropdown-item:last-child { border-bottom: none; }
+    .dropdown-item:hover, .dropdown-item.active {
+      background: #f0f6ff; color: var(--primary-mid);
+    }
+
+    /* Status */
+    #status {
+      margin-top: 10px;
+      min-height: 18px;
+      font-size: 13px; font-weight: 500;
+    }
+    .status-loading {
+      color: rgba(255,255,255,0.65);
+      display: flex; align-items: center; gap: 7px;
+    }
+    .status-error { color: #fca5a5; }
+    .spinner {
+      width: 13px; height: 13px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: rgba(255,255,255,0.85);
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Main ──────────────────────────────────────────────────────── */
+    .main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 24px 48px;
+    }
+
+    #results { display: none; }
+
+    /* Summary pills */
+    .summary-strip {
+      display: flex; gap: 10px; margin-bottom: 22px; flex-wrap: wrap;
+    }
+    .metric-pill {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      padding: 7px 18px;
+      display: inline-flex; align-items: center; gap: 8px;
+      box-shadow: var(--shadow-sm);
+    }
+    .metric-icon { font-size: 15px; }
+    .metric-value { font-size: 17px; font-weight: 700; color: var(--text); line-height: 1; }
+    .metric-label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+
+    /* Results grid */
+    .results-grid {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 20px;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .results-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Section title */
+    .section-head {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 14px;
+    }
+    .section-head h2 { font-size: 14px; font-weight: 700; color: var(--text); }
+    .section-badge {
+      background: var(--primary);
+      color: white;
+      font-size: 11px; font-weight: 700;
+      padding: 2px 9px; border-radius: 50px;
+    }
+
+    /* Leg cards */
+    .leg-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow 0.2s, transform 0.2s;
+      animation: fadeUp 0.35s ease both;
+    }
+    .leg-card:last-child { margin-bottom: 0; }
+    .leg-card:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
+    .leg-card:nth-child(1) { animation-delay: 0.05s; }
+    .leg-card:nth-child(2) { animation-delay: 0.10s; }
+    .leg-card:nth-child(3) { animation-delay: 0.15s; }
+    .leg-card:nth-child(4) { animation-delay: 0.20s; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .leg-header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .leg-step {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .leg-info { flex: 1; min-width: 0; }
+    .leg-line {
+      font-size: 14px; font-weight: 700; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .leg-stops {
+      font-size: 12px; color: var(--text-muted); font-weight: 500; margin-top: 2px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .leg-stops span { color: var(--text-light); margin: 0 4px; }
+
+    .leg-mode {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      flex-shrink: 0;
+    }
+    .leg-mode-icon { font-size: 20px; }
+    .mode-chip {
+      font-size: 10px; font-weight: 700;
+      padding: 2px 8px; border-radius: 50px;
+      color: white; letter-spacing: 0.2px;
+    }
+
+    .leg-body { padding: 13px 16px; }
+
+    /* Source badge */
+    .source-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.4px;
+      text-transform: uppercase;
+      padding: 3px 10px; border-radius: 50px;
+      margin-bottom: 11px;
+    }
+    .source-badge.ptv  { background: #e8f5e9; color: #1b5e20; }
+    .source-badge.ptv::before  { content: '●'; color: #43a047; font-size: 9px; }
+    .source-badge.google { background: #fff8e1; color: #bf360c; }
+    .source-badge.google::before { content: '●'; color: #fb8c00; font-size: 9px; }
+
+    /* Departure rows */
+    .departure-list { display: flex; flex-direction: column; gap: 6px; }
+    .departure-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px;
+      background: #f5f8ff;
+      border: 1px solid #e4ecff;
+      border-radius: 8px;
+      font-size: 13px;
+      transition: background 0.15s;
+    }
+    .departure-row:hover { background: #edf2ff; }
+
+    .route-chip {
+      background: var(--primary-mid);
+      color: white;
+      font-size: 11px; font-weight: 700;
+      padding: 2px 8px; border-radius: 6px;
+      flex-shrink: 0;
+    }
+    .dep-time { font-size: 14px; font-weight: 700; color: var(--text); }
+    .dep-platform {
+      font-size: 11px; font-weight: 600;
+      color: var(--text-muted);
+      background: var(--border);
+      padding: 2px 6px; border-radius: 4px;
+    }
+    .dep-mins {
+      margin-left: auto;
+      font-size: 12px; font-weight: 600;
+      color: var(--primary-mid);
+      white-space: nowrap;
+    }
+    .dep-mins.now  { color: #16a34a; }
+    .dep-mins.soon { color: #dc2626; }
+
+    /* Transfer */
+    .transfer-note {
+      margin-top: 10px;
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--text-muted);
+    }
+    .transfer-note::before { content: '↕'; color: var(--text-light); font-size: 14px; }
+
+    /* Alerts */
+    .alert-bar {
+      display: flex; gap: 10px; align-items: flex-start;
+      border-radius: 8px; padding: 10px 12px;
+      font-size: 13px; margin-top: 8px;
+    }
+    .alert-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+    .alert-bar strong { display: block; margin-bottom: 2px; font-size: 13px; line-height: 1.4; }
+    .alert-bar p { margin: 0; font-size: 12px; opacity: 0.85; line-height: 1.4; }
+    .alert-disruption { background: #fffbeb; border-left: 3px solid #f59e0b; color: #78350f; }
+    .alert-delay      { background: #fff5f5; border-left: 3px solid #ef4444; color: #7f1d1d; }
+
+    /* Map */
+    .map-card {
+      position: sticky; top: 20px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .map-card-head {
+      padding: 13px 18px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px; font-weight: 700; color: var(--text);
+      display: flex; align-items: center; gap: 8px;
+    }
+    #map { width: 100%; height: 400px; display: block; }
+    .map-empty {
+      height: 400px;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 8px;
+      color: var(--text-light);
+      background: var(--surface-2);
+      font-size: 13px; text-align: center; padding: 24px;
+    }
+    .map-empty-icon { font-size: 36px; opacity: 0.35; }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center; padding: 32px 20px;
+      color: var(--text-muted); font-size: 14px;
+    }
+    .error { color: #ef4444; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-logo">P</div>
+        <div class="brand-text">
+          <div class="brand-name">PTV <span>Journey Planner</span></div>
+          <div class="brand-sub">Melbourne Public Transport</div>
+        </div>
+      </div>
+
+      <nav class="app-nav">
+        <a href="/" class="nav-link active">Journey Planner</a>
+        <a href="/favorites.html" class="nav-link">Saved Routes</a>
+        <div class="nav-spacer"></div>
+        <div id="navAuth"></div>
+      </nav>
+
+      <div class="search-card">
+        <div class="search-label">Plan your journey</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="origin">From</label>
+            <div class="input-wrap">
+              <span class="input-icon">📍</span>
+              <input id="origin" type="text" placeholder="Origin station or suburb" autocomplete="off" style="padding-right:32px" />
+              <button class="loc-btn" id="locBtn" title="Use my current location" onclick="useMyLocation()">🎯</button>
+            </div>
+            <div class="dropdown" id="origin-dropdown" style="display:none"></div>
+          </div>
+          <div class="form-group">
+            <label for="destination">To</label>
+            <div class="input-wrap">
+              <span class="input-icon">🏁</span>
+              <input id="destination" type="text" placeholder="Destination station or suburb" autocomplete="off" />
+            </div>
+            <div class="dropdown" id="destination-dropdown" style="display:none"></div>
+          </div>
+          <button class="search-btn" id="searchBtn" onclick="search()">Search →</button>
+        </div>
+        <div id="status"></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+    <div id="results">
+      <!-- Save as Favorite banner -->
+      <div class="save-banner" id="saveBanner">
+        <span class="save-banner-text">Save this journey?</span>
+        <input type="text" id="saveNameInput" placeholder="Name this route…" maxlength="60" />
+        <button class="save-banner-btn" id="saveBannerBtn" onclick="saveJourney()">Save</button>
+        <span class="save-success" id="saveSuccess">Saved!</span>
+      </div>
+
+      <div class="summary-strip">
+        <div class="metric-pill">
+          <span class="metric-icon">⏱</span>
+          <span class="metric-value" id="totalDuration">—</span>
+          <span class="metric-label">total time</span>
+        </div>
+        <div class="metric-pill">
+          <span class="metric-icon">📏</span>
+          <span class="metric-value" id="totalDistance">—</span>
+          <span class="metric-label">distance</span>
+        </div>
+      </div>
+
+      <div class="results-grid">
+        <div>
+          <div class="section-head">
+            <h2>Journey legs</h2>
+            <span class="section-badge" id="legCount"></span>
+          </div>
+          <div id="legs"></div>
+        </div>
+
+        <div>
+          <div class="map-card">
+            <div class="map-card-head">🗺 Route map</div>
+            <div id="map"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // ── Current location ─────────────────────────────────────────────
+    async function useMyLocation() {
+      if (!navigator.geolocation) {
+        alert('Geolocation is not supported by your browser.');
+        return;
+      }
+      const btn = document.getElementById('locBtn');
+      const input = document.getElementById('origin');
+      btn.classList.add('loading');
+      btn.disabled = true;
+      input.placeholder = 'Getting location…';
+
+      navigator.geolocation.getCurrentPosition(
+        async ({ coords }) => {
+          try {
+            const res = await fetch(`/reverse-geocode?lat=${coords.latitude}&lng=${coords.longitude}`);
+            const data = await res.json();
+            if (res.ok) {
+              input.value = data.address;
+              input.placeholder = 'Origin station or suburb';
+            } else {
+              input.placeholder = 'Could not get address';
+            }
+          } catch {
+            input.placeholder = 'Request failed';
+          } finally {
+            btn.classList.remove('loading');
+            btn.disabled = false;
+          }
+        },
+        () => {
+          input.placeholder = 'Location access denied';
+          btn.classList.remove('loading');
+          btn.disabled = false;
+        },
+        { timeout: 8000 }
+      );
+    }
+
+    // ── Auth nav ────────────────────────────────────────────────────
+    const _token = localStorage.getItem('ptv_token');
+    const _user  = JSON.parse(localStorage.getItem('ptv_user') || 'null');
+
+    function updateNav() {
+      const navAuth = document.getElementById('navAuth');
+      if (_user && _token) {
+        navAuth.innerHTML = `
+          <span class="nav-user">${_user.email}</span>
+          <button class="nav-btn-ghost" onclick="logout()">Logout</button>`;
+      } else {
+        navAuth.innerHTML = `
+          <a href="/login.html" class="nav-btn-ghost">Login</a>
+          <a href="/register.html" class="nav-btn-accent" style="margin-left:6px">Register</a>`;
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('ptv_token');
+      localStorage.removeItem('ptv_user');
+      window.location.reload();
+    }
+
+    updateNav();
+
+    // ── Save journey ─────────────────────────────────────────────────
+    let _lastOrigin = '', _lastDestination = '';
+
+    async function saveJourney() {
+      if (!_token) { window.location.href = '/login.html'; return; }
+      const name = document.getElementById('saveNameInput').value.trim();
+      if (!name) { document.getElementById('saveNameInput').focus(); return; }
+      const btn = document.getElementById('saveBannerBtn');
+      const successEl = document.getElementById('saveSuccess');
+      btn.disabled = true;
+      try {
+        const res = await fetch('/favorites', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_token}` },
+          body: JSON.stringify({ name, origin: _lastOrigin, destination: _lastDestination })
+        });
+        if (res.status === 401) { window.location.href = '/login.html'; return; }
+        if (res.ok) {
+          successEl.style.display = 'inline';
+          btn.style.display = 'none';
+          setTimeout(() => { successEl.style.display = 'none'; btn.style.display = ''; }, 3000);
+        }
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    const ICONS = {
+      HEAVY_RAIL: '🚆', COMMUTER_TRAIN: '🚆', RAIL: '🚆',
+      TRAM: '🚊', BUS: '🚌', SUBWAY: '🚇', FERRY: '⛴️'
+    };
+    const MODE_LABEL = {
+      HEAVY_RAIL: 'Train', COMMUTER_TRAIN: 'Train', RAIL: 'Train',
+      TRAM: 'Tram', BUS: 'Bus', SUBWAY: 'Metro', FERRY: 'Ferry'
+    };
+    const MODE_COLOR = {
+      HEAVY_RAIL: '#1565c0', COMMUTER_TRAIN: '#1565c0', RAIL: '#1565c0',
+      TRAM: '#2e7d32', BUS: '#c62828', SUBWAY: '#6a1b9a', FERRY: '#00695c'
+    };
+
+    function formatTime(iso) {
+      if (!iso) return '—';
+      return new Date(iso).toLocaleTimeString('en-AU', {
+        hour: '2-digit', minute: '2-digit',
+        timeZone: 'Australia/Melbourne'
+      });
+    }
+    function formatDuration(s) {
+      const m = Math.round(s / 60);
+      return m < 60 ? `${m} min` : `${Math.floor(m/60)}h ${m % 60}min`;
+    }
+    function formatDistance(m) {
+      return m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${m} m`;
+    }
+
+    // ── Maps API ────────────────────────────────────────────────────
+    let map, directionsService, directionsRenderer;
+    let infoWindows = [];
+
+    async function loadMapsApi() {
+      const cfg = await fetch('/config').then(r => r.json());
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${cfg.mapsApiKey}`;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+      map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat: -37.8136, lng: 144.9631 },
+        zoom: 12,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
+        styles: [
+          { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+          { featureType: 'transit.station', stylers: [{ visibility: 'simplified' }] }
+        ]
+      });
+      directionsService = new google.maps.DirectionsService();
+      directionsRenderer = new google.maps.DirectionsRenderer({ map, suppressMarkers: true });
+    }
+
+    function showRouteOnMap(origin, destination, legs) {
+      infoWindows.forEach(w => w.close());
+      infoWindows = [];
+
+      directionsService.route(
+        { origin, destination, travelMode: google.maps.TravelMode.TRANSIT },
+        (result, status) => {
+          if (status !== 'OK') return;
+          directionsRenderer.setDirections(result);
+
+          result.routes[0].legs[0].steps
+            .filter(s => s.travel_mode === 'TRANSIT')
+            .forEach((step, i) => {
+              const leg = legs[i];
+              if (!leg) return;
+              const ptv = leg.ptv;
+              const markerColor = ptv?.found ? '#0052cc' : '#94a3b8';
+
+              const marker = new google.maps.Marker({
+                position: step.start_location,
+                map,
+                icon: {
+                  path: google.maps.SymbolPath.CIRCLE,
+                  scale: 9,
+                  fillColor: markerColor,
+                  fillOpacity: 1,
+                  strokeColor: 'white',
+                  strokeWeight: 2.5
+                },
+                title: leg.departure_stop
+              });
+
+              let ptvContent = '';
+              if (ptv?.found && ptv.departures?.length > 0) {
+                const next = ptv.departures[0];
+                ptvContent = `
+                  <div style="margin-top:6px;padding-top:6px;border-top:1px solid #f0f0f0;font-size:12px;color:#555;">
+                    <strong style="color:#0052cc;">PTV</strong> · Next: <strong>${formatTime(next.scheduled_departure)}</strong>
+                    ${next.platform ? `· Plat ${next.platform}` : ''}
+                  </div>`;
+              }
+
+              const infoWindow = new google.maps.InfoWindow({
+                content: `
+                  <div style="font-family:Inter,sans-serif;font-size:13px;max-width:200px;line-height:1.5;">
+                    <strong style="color:#1a202c;">${leg.departure_stop}</strong><br/>
+                    <span style="color:#64748b;">${ICONS[leg.mode] || '🚌'} ${leg.line}</span>
+                    ${ptvContent}
+                  </div>`
+              });
+
+              marker.addListener('click', () => {
+                infoWindows.forEach(w => w.close());
+                infoWindow.open(map, marker);
+              });
+              infoWindows.push(infoWindow);
+            });
+        }
+      );
+    }
+
+    // ── Autocomplete ────────────────────────────────────────────────
+    let debounceTimers = {};
+
+    function setupAutocomplete(inputId) {
+      const input    = document.getElementById(inputId);
+      const dropdown = document.getElementById(`${inputId}-dropdown`);
+      let activeIndex = -1;
+      let items = [];
+
+      input.addEventListener('input', () => {
+        clearTimeout(debounceTimers[inputId]);
+        const val = input.value.trim();
+        if (val.length < 2) { dropdown.style.display = 'none'; return; }
+
+        debounceTimers[inputId] = setTimeout(async () => {
+          try {
+            const res  = await fetch(`/autocomplete?input=${encodeURIComponent(val)}`);
+            const data = await res.json();
+            if (!res.ok) return;
+            items = data.suggestions || [];
+            activeIndex = -1;
+            if (items.length === 0) { dropdown.style.display = 'none'; return; }
+            dropdown.innerHTML = items.map((s, i) =>
+              `<div class="dropdown-item" data-index="${i}">${s.text}</div>`
+            ).join('');
+            dropdown.querySelectorAll('.dropdown-item').forEach(el => {
+              el.addEventListener('mousedown', () => {
+                input.value = items[Number(el.dataset.index)].text;
+                dropdown.style.display = 'none';
+              });
+            });
+            dropdown.style.display = 'block';
+          } catch(e) { console.error(e); }
+        }, 300);
+      });
+
+      input.addEventListener('keydown', e => {
+        const els = dropdown.querySelectorAll('.dropdown-item');
+        if (e.key === 'ArrowDown')  activeIndex = Math.min(activeIndex + 1, els.length - 1);
+        else if (e.key === 'ArrowUp')   activeIndex = Math.max(activeIndex - 1, 0);
+        else if (e.key === 'Enter') {
+          if (activeIndex >= 0 && items[activeIndex]) {
+            input.value = items[activeIndex].text;
+            dropdown.style.display = 'none';
+          } else { search(); }
+          return;
+        } else if (e.key === 'Escape') { dropdown.style.display = 'none'; }
+        els.forEach((el, i) => el.classList.toggle('active', i === activeIndex));
+      });
+
+      input.addEventListener('blur', () =>
+        setTimeout(() => { dropdown.style.display = 'none'; }, 150)
+      );
+    }
+
+    setupAutocomplete('origin');
+    setupAutocomplete('destination');
+
+    // ── Render leg ──────────────────────────────────────────────────
+    function renderLeg(leg, index, total) {
+      const icon      = ICONS[leg.mode]      || '🚌';
+      const modeLabel = MODE_LABEL[leg.mode] || leg.mode;
+      const modeColor = MODE_COLOR[leg.mode] || '#555';
+      const ptv       = leg.ptv;
+
+      let sourceTag = '';
+      let timesHtml = '';
+
+      if (ptv?.found && ptv.departures?.length > 0) {
+        sourceTag = '<span class="source-badge ptv">PTV real-time</span>';
+        timesHtml = `<div class="departure-list">${ptv.departures.map(d => {
+          const num      = d.route_number || d.route_name || '?';
+          const minsUntil = d.mins_until;
+          let minsClass = '';
+          let minsText  = '';
+          if (minsUntil <= 0)      { minsClass = 'now';  minsText = 'Now'; }
+          else if (minsUntil <= 3) { minsClass = 'soon'; minsText = `${minsUntil} min`; }
+          else                     { minsText = `${minsUntil} min`; }
+          return `
+          <div class="departure-row">
+            <span class="route-chip">${num}</span>
+            <span class="dep-time">${formatTime(d.scheduled_departure)}</span>
+            ${d.platform ? `<span class="dep-platform">Plat ${d.platform}</span>` : ''}
+            <span class="dep-mins ${minsClass}">${minsText}</span>
+          </div>`;
+        }).join('')}</div>`;
+      } else if (ptv?.found) {
+        sourceTag = '<span class="source-badge ptv">PTV real-time</span>';
+        timesHtml = `<p style="color:var(--text-muted);font-size:13px;">No direct services found on PTV for this leg.</p>`;
+      } else {
+        timesHtml = `<p style="color:var(--text-light);font-size:13px;font-style:italic;">PTV stop not found — departures unavailable.</p>`;
+      }
+
+      const transferNote = (total > 1 && index < total - 1)
+        ? `<p class="transfer-note">Transfer at <strong>${leg.arrival_stop}</strong></p>`
+        : '';
+
+      const disruptionsHtml = (leg.disruptions || []).map(d => {
+        const isDelay = d.type === 'delay' ||
+          /delay|late|minutes?\s+late/i.test((d.title || '') + ' ' + (d.description || ''));
+        return `
+        <div class="alert-bar ${isDelay ? 'alert-delay' : 'alert-disruption'}">
+          <span class="alert-icon">${isDelay ? '🕐' : '⚠️'}</span>
+          <div>
+            <strong>${d.title}</strong>
+            ${d.description ? `<p>${d.description}</p>` : ''}
+          </div>
+        </div>`;
+      }).join('');
+
+      return `
+      <div class="leg-card">
+        <div class="leg-header">
+          <div class="leg-step">${index + 1}</div>
+          <div class="leg-info">
+            <div class="leg-line">${leg.line} — ${leg.headsign}</div>
+            <div class="leg-stops">${leg.departure_stop}<span>→</span>${leg.arrival_stop}</div>
+          </div>
+          <div class="leg-mode">
+            <div class="leg-mode-icon">${icon}</div>
+            <span class="mode-chip" style="background:${modeColor}">${modeLabel}</span>
+          </div>
+        </div>
+        <div class="leg-body">
+          ${sourceTag}
+          ${timesHtml}
+          ${transferNote}
+          ${disruptionsHtml}
+        </div>
+      </div>`;
+    }
+
+    // ── Search ──────────────────────────────────────────────────────
+    async function search() {
+      const origin      = document.getElementById('origin').value.trim();
+      const destination = document.getElementById('destination').value.trim();
+      const btn         = document.getElementById('searchBtn');
+      const statusEl    = document.getElementById('status');
+      const resultsEl   = document.getElementById('results');
+
+      if (!origin || !destination) {
+        statusEl.innerHTML = '<span class="status-error">Please enter both origin and destination.</span>';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Searching…';
+      statusEl.innerHTML = `<span class="status-loading"><span class="spinner"></span>Finding the best route…</span>`;
+      resultsEl.style.display = 'none';
+
+      try {
+        const res  = await fetch(`/journey?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`);
+        const data = await res.json();
+
+        if (!res.ok) {
+          const msg = typeof data.error === 'object' ? JSON.stringify(data.error, null, 2) : data.error;
+          statusEl.innerHTML = `<span class="status-error">${msg}</span>`;
+          return;
+        }
+
+        statusEl.innerHTML = '';
+        document.getElementById('totalDuration').textContent = formatDuration(data.duration_seconds);
+        document.getElementById('totalDistance').textContent = formatDistance(data.distance_meters);
+        document.getElementById('legCount').textContent      = `${data.legs.length} leg${data.legs.length !== 1 ? 's' : ''}`;
+
+        const legsEl = document.getElementById('legs');
+        legsEl.innerHTML = data.legs.length === 0
+          ? '<div class="empty-state">No transit legs found for this route.</div>'
+          : data.legs.map((leg, i) => renderLeg(leg, i, data.legs.length)).join('');
+
+        resultsEl.style.display = 'block';
+
+        // Show save banner
+        _lastOrigin = origin;
+        _lastDestination = destination;
+        const banner = document.getElementById('saveBanner');
+        const successEl = document.getElementById('saveSuccess');
+        const saveBtn = document.getElementById('saveBannerBtn');
+        document.getElementById('saveNameInput').value = '';
+        successEl.style.display = 'none';
+        saveBtn.style.display = '';
+        if (_token) {
+          banner.style.display = 'flex';
+        } else {
+          banner.style.display = 'flex';
+          document.getElementById('saveNameInput').placeholder = 'Login to save routes';
+          document.getElementById('saveNameInput').disabled = true;
+          saveBtn.textContent = 'Login';
+        }
+
+        const hasPtvData = data.legs.some(l => l.ptv?.found);
+        if (hasPtvData) {
+          showRouteOnMap(origin, destination, data.legs);
+        } else {
+          document.getElementById('map').outerHTML =
+            `<div id="map" class="map-empty">
+              <div class="map-empty-icon">🗺</div>
+              Map unavailable — PTV stops not found
+            </div>`;
+        }
+
+      } catch (err) {
+        statusEl.innerHTML = `<span class="status-error">Request failed: ${err.message}</span>`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Search →';
+      }
+    }
+
+    // Pre-fill from URL params (e.g. coming from favorites "Plan" button)
+    (function prefillFromParams() {
+      const params = new URLSearchParams(window.location.search);
+      const o = params.get('origin');
+      const d = params.get('destination');
+      if (o) document.getElementById('origin').value = o;
+      if (d) document.getElementById('destination').value = d;
+      if (o && d) search();
+    })();
+
+    loadMapsApi();
+  </script>
+</body>
+</html>

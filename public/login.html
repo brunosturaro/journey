@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — PTV Journey Planner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary:      #003082;
+      --primary-mid:  #0052cc;
+      --primary-dark: #001a52;
+      --accent:       #ffcd00;
+      --bg:           #f0f3f9;
+      --surface:      #ffffff;
+      --border:       #e2e8f0;
+      --text:         #1a202c;
+      --text-muted:   #64748b;
+      --radius:       12px;
+      --shadow:       0 4px 16px rgba(0,0,0,0.07), 0 2px 6px rgba(0,0,0,0.04);
+      --shadow-lg:    0 12px 40px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .app-header {
+      background: linear-gradient(140deg, var(--primary-dark) 0%, var(--primary) 55%, #0a4bba 100%);
+      padding: 0 24px;
+    }
+    .header-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 22px 0;
+    }
+    .brand {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 16px;
+    }
+    .brand-logo {
+      width: 38px; height: 38px;
+      background: var(--accent);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 800;
+      color: var(--primary-dark);
+      flex-shrink: 0;
+      text-decoration: none;
+    }
+    .brand-text { line-height: 1; }
+    .brand-name {
+      font-size: 17px; font-weight: 700;
+      color: rgba(255,255,255,0.95);
+      letter-spacing: -0.3px;
+      text-decoration: none;
+    }
+    .brand-name span { color: var(--accent); }
+    .brand-sub {
+      font-size: 11px; font-weight: 500;
+      color: rgba(255,255,255,0.45);
+      margin-top: 2px; letter-spacing: 0.3px;
+    }
+
+    /* Nav */
+    .app-nav {
+      display: flex; align-items: center; gap: 4px;
+    }
+    .nav-link {
+      color: rgba(255,255,255,0.65);
+      text-decoration: none;
+      font-size: 13px; font-weight: 500;
+      padding: 5px 10px;
+      border-radius: 6px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .nav-link:hover { color: white; background: rgba(255,255,255,0.1); }
+    .nav-spacer { flex: 1; }
+    .nav-btn-accent {
+      background: var(--accent);
+      color: var(--primary-dark);
+      font-size: 12px; font-weight: 700;
+      padding: 5px 12px; border-radius: 6px;
+      text-decoration: none;
+    }
+    .nav-btn-ghost {
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.8);
+      font-size: 12px; font-weight: 600;
+      padding: 5px 12px; border-radius: 6px;
+      text-decoration: none;
+    }
+
+    /* Page body */
+    .page-body {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px;
+    }
+
+    /* Auth card */
+    .auth-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      padding: 36px 40px;
+      width: 100%;
+      max-width: 400px;
+    }
+    .auth-title {
+      font-size: 22px; font-weight: 800;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .auth-sub {
+      font-size: 13px; color: var(--text-muted);
+      margin-bottom: 28px;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 12px; font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px; font-weight: 500;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+      background: #fafbfd;
+    }
+    .form-group input:focus {
+      border-color: var(--primary-mid);
+      background: white;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 12px;
+      background: var(--primary);
+      color: white;
+      border: none; border-radius: 8px;
+      font-family: inherit;
+      font-size: 15px; font-weight: 700;
+      cursor: pointer;
+      margin-top: 6px;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .submit-btn:hover { background: var(--primary-mid); }
+    .submit-btn:active { transform: scale(0.99); }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .auth-error {
+      background: #fff5f5;
+      border: 1px solid #fecaca;
+      color: #b91c1c;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px; font-weight: 500;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .auth-switch {
+      text-align: center;
+      margin-top: 22px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .auth-switch a {
+      color: var(--primary-mid);
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .auth-switch a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand">
+        <a href="/" class="brand-logo">P</a>
+        <div class="brand-text">
+          <a href="/" class="brand-name">PTV <span>Journey Planner</span></a>
+          <div class="brand-sub">Melbourne Public Transport</div>
+        </div>
+      </div>
+      <nav class="app-nav">
+        <a href="/" class="nav-link">Journey Planner</a>
+        <a href="/favorites.html" class="nav-link">Saved Routes</a>
+        <div class="nav-spacer"></div>
+        <a href="/register.html" class="nav-btn-accent">Register</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="page-body">
+    <div class="auth-card">
+      <div class="auth-title">Welcome back</div>
+      <div class="auth-sub">Sign in to access your saved routes</div>
+
+      <div class="auth-error" id="errorMsg"></div>
+
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" placeholder="you@example.com" required autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password" />
+        </div>
+        <button type="submit" class="submit-btn" id="submitBtn">Sign in</button>
+      </form>
+
+      <div class="auth-switch">
+        Don't have an account? <a href="/register.html">Register</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Redirect if already logged in
+    if (localStorage.getItem('ptv_token')) {
+      window.location.href = '/favorites.html';
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      const errorEl = document.getElementById('errorMsg');
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      btn.disabled = true;
+      btn.textContent = 'Signing in…';
+      errorEl.style.display = 'none';
+
+      try {
+        const res = await fetch('/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          errorEl.textContent = data.error;
+          errorEl.style.display = 'block';
+          return;
+        }
+
+        localStorage.setItem('ptv_token', data.token);
+        localStorage.setItem('ptv_user', JSON.stringify(data.user));
+        window.location.href = '/favorites.html';
+      } catch (err) {
+        errorEl.textContent = 'Request failed. Please try again.';
+        errorEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Sign in';
+      }
+    }
+  </script>
+</body>
+</html>

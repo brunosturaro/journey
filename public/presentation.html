@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PTV Journey Planner — Presentation</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .deck { width: 100%; height: 100vh; position: relative; }
+
+    .slide {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      padding: 60px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.4s ease;
+      text-align: center;
+    }
+    .slide.active { opacity: 1; pointer-events: all; }
+
+    /* Nav */
+    .nav {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 16px; z-index: 99;
+    }
+    .nav button {
+      background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+      color: #e6edf3; padding: 8px 20px; border-radius: 20px; font-size: 14px;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .nav button:hover { background: rgba(255,255,255,0.2); }
+    .nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+    .slide-counter { font-size: 13px; color: #8b949e; min-width: 60px; text-align: center; }
+
+    /* Dots */
+    .dots {
+      position: fixed; bottom: 72px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 8px;
+    }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: rgba(255,255,255,0.2); cursor: pointer;
+      transition: background 0.2s;
+    }
+    .dot.active { background: #58a6ff; }
+
+    /* ─── Slide 1: Title ─── */
+    .s1 { background: linear-gradient(135deg, #0d1117 0%, #161b22 100%); }
+    .s1 .tag {
+      background: #1f6feb; color: #fff; font-size: 12px; font-weight: 700;
+      padding: 4px 14px; border-radius: 20px; letter-spacing: 1px;
+      margin-bottom: 24px; text-transform: uppercase;
+    }
+    .s1 h1 { font-size: 54px; font-weight: 700; line-height: 1.15; margin-bottom: 16px; }
+    .s1 h1 span { color: #58a6ff; }
+    .s1 p { font-size: 20px; color: #8b949e; max-width: 560px; line-height: 1.5; }
+    .s1 .names { margin-top: 40px; font-size: 15px; color: #6e7681; }
+
+    /* ─── Slide 2: What it does ─── */
+    .s2 { background: #0d1117; }
+    .s2 h2 { font-size: 38px; margin-bottom: 48px; }
+    .feature-row { display: flex; gap: 20px; max-width: 900px; }
+    .feat {
+      flex: 1; background: #161b22; border: 1px solid #30363d;
+      border-radius: 12px; padding: 24px; text-align: left;
+    }
+    .feat .num {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: #1f6feb; color: #fff; font-weight: 700; font-size: 16px;
+      display: flex; align-items: center; justify-content: center; margin-bottom: 14px;
+    }
+    .feat h3 { font-size: 15px; margin-bottom: 8px; }
+    .feat p { font-size: 13px; color: #8b949e; line-height: 1.5; }
+
+    /* ─── Slide 4: Architecture ─── */
+    .s4 { background: #0d1117; }
+    .s4 h2 { font-size: 38px; margin-bottom: 44px; }
+    .arch {
+      display: flex; align-items: center; gap: 0; max-width: 900px;
+      flex-wrap: wrap; justify-content: center; gap: 0;
+    }
+    .arch-box {
+      background: #161b22; border: 1px solid #30363d; border-radius: 10px;
+      padding: 18px 22px; text-align: center; min-width: 140px;
+    }
+    .arch-box .icon { font-size: 28px; margin-bottom: 8px; }
+    .arch-box h4 { font-size: 13px; font-weight: 700; margin-bottom: 4px; color: #e6edf3; }
+    .arch-box p { font-size: 11px; color: #8b949e; }
+    .arch-box.highlight { border-color: #1f6feb; background: #0d2044; }
+    .arrow { font-size: 22px; color: #30363d; padding: 0 8px; }
+
+    /* ─── Slide 5: APIs ─── */
+    .s5 { background: #0d1117; }
+    .s5 h2 { font-size: 38px; margin-bottom: 44px; }
+    .api-list { display: flex; flex-direction: column; gap: 14px; max-width: 700px; width: 100%; }
+    .api-item {
+      display: flex; align-items: center; gap: 16px;
+      background: #161b22; border: 1px solid #30363d; border-radius: 10px;
+      padding: 16px 20px;
+    }
+    .api-badge {
+      font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .badge-google { background: #0a3069; color: #58a6ff; }
+    .badge-ptv    { background: #1a3a1a; color: #3fb950; }
+    .badge-class  { background: #3a1a2e; color: #f778ba; }
+    .api-item h4 { font-size: 14px; margin-bottom: 3px; }
+    .api-item p  { font-size: 12px; color: #8b949e; }
+
+    /* ─── Slide 6: Live Demo ─── */
+    .s6 { background: linear-gradient(135deg, #0d1117 0%, #0d2044 100%); }
+    .s6 h2 { font-size: 48px; margin-bottom: 16px; }
+    .s6 .sub { font-size: 20px; color: #8b949e; margin-bottom: 48px; }
+    .demo-link {
+      display: inline-block;
+      background: #1f6feb; color: #fff; text-decoration: none;
+      padding: 16px 40px; border-radius: 8px; font-size: 18px; font-weight: 600;
+      transition: background 0.2s;
+    }
+    .demo-link:hover { background: #388bfd; }
+    .s6 .tip { margin-top: 24px; font-size: 13px; color: #6e7681; }
+  </style>
+</head>
+<body>
+
+<div class="deck" id="deck">
+
+  <!-- Slide 1: Title -->
+  <div class="slide s1 active">
+    <div class="tag">Hackathon 2025</div>
+    <h1>PTV Journey <span>Planner</span></h1>
+    <p>Real-time public transport journey planning for Melbourne, powered by Google and PTV APIs.</p>
+  </div>
+
+  <!-- Slide 2: What it does -->
+  <div class="slide s2">
+    <h2>What it does</h2>
+    <div class="feature-row">
+      <div class="feat">
+        <div class="num">1</div>
+        <h3>Search any destination</h3>
+        <p>Type any Melbourne address or stop — autocomplete finds it instantly via Google Places.</p>
+      </div>
+      <div class="feat">
+        <div class="num">2</div>
+        <h3>Plan your journey</h3>
+        <p>Google Routes finds the best transit path, breaking it into legs — train, tram, or bus.</p>
+      </div>
+      <div class="feat">
+        <div class="num">3</div>
+        <h3>Real-time departures</h3>
+        <p>Each leg shows the next 5 departures from PTV, with route number and minutes until departure.</p>
+      </div>
+      <div class="feat">
+        <div class="num">4</div>
+        <h3>Live alerts</h3>
+        <p>Delays and disruptions are shown per leg, so you know before you leave.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 4: Architecture -->
+  <div class="slide s4">
+    <h2>Architecture</h2>
+    <div class="arch">
+      <div class="arch-box">
+        <div class="icon">🖥️</div>
+        <h4>Browser</h4>
+        <p>index.html</p>
+      </div>
+      <div class="arrow">→</div>
+      <div class="arch-box highlight">
+        <div class="icon">⚙️</div>
+        <h4>Node / Express</h4>
+        <p>Our backend</p>
+      </div>
+      <div class="arrow">→</div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="arch-box">
+          <div class="icon">🗺️</div>
+          <h4>Google APIs</h4>
+          <p>Routes · Places · Maps</p>
+        </div>
+        <div class="arch-box">
+          <div class="icon">🚆</div>
+          <h4>PTV API v3</h4>
+          <p>Timetable · Disruptions</p>
+        </div>
+        <div class="arch-box">
+          <div class="icon">🚨</div>
+          <h4>Alerts API</h4>
+          <p>Delays · Disruptions</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 5: APIs Used -->
+  <div class="slide s5">
+    <h2>APIs Used</h2>
+    <div class="api-list">
+      <div class="api-item">
+        <span class="api-badge badge-google">Google</span>
+        <div>
+          <h4>Places Autocomplete</h4>
+          <p>Suggests Melbourne stops and addresses as the user types.</p>
+        </div>
+      </div>
+      <div class="api-item">
+        <span class="api-badge badge-google">Google</span>
+        <div>
+          <h4>Routes API v2</h4>
+          <p>Computes the optimal transit journey with walking legs.</p>
+        </div>
+      </div>
+      <div class="api-item">
+        <span class="api-badge badge-google">Google</span>
+        <div>
+          <h4>Maps JavaScript API</h4>
+          <p>Renders the route on an interactive map with stop markers.</p>
+        </div>
+      </div>
+      <div class="api-item">
+        <span class="api-badge badge-ptv">PTV</span>
+        <div>
+          <h4>PTV Timetable API v3</h4>
+          <p>Provides real-time departure times for each leg (HMAC-SHA1 signed).</p>
+        </div>
+      </div>
+      <div class="api-item">
+        <span class="api-badge badge-class">Alerts</span>
+        <div>
+          <h4>Alerts API</h4>
+          <p>Returns delay minutes and disruption alerts per route.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 6: Demo -->
+  <div class="slide s6">
+    <h2>Live Demo</h2>
+    <p class="sub">Let's see it in action.</p>
+    <a class="demo-link" href="/" target="_blank">Open Journey Planner →</a>
+    <p class="tip">Also available at <strong>http://localhost:3000</strong></p>
+  </div>
+
+</div>
+
+<!-- Dots -->
+<div class="dots" id="dots"></div>
+
+<!-- Nav -->
+<div class="nav">
+  <button id="prevBtn" onclick="go(-1)" disabled>← Prev</button>
+  <span class="slide-counter" id="counter">1 / 6</span>
+  <button id="nextBtn" onclick="go(1)">Next →</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  let current = 0;
+
+  // Build dots
+  const dotsEl = document.getElementById('dots');
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.onclick = () => goTo(i);
+    dotsEl.appendChild(d);
+  });
+
+  function goTo(n) {
+    slides[current].classList.remove('active');
+    dotsEl.children[current].classList.remove('active');
+    current = Math.max(0, Math.min(n, total - 1));
+    slides[current].classList.add('active');
+    dotsEl.children[current].classList.add('active');
+    document.getElementById('counter').textContent = `${current + 1} / ${total}`;
+    document.getElementById('prevBtn').disabled = current === 0;
+    document.getElementById('nextBtn').disabled = current === total - 1;
+  }
+
+  function go(dir) { goTo(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') go(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   go(-1);
+  });
+</script>
+</body>
+</html>

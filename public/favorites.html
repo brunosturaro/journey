@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Saved Routes — PTV Journey Planner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary:      #003082;
+      --primary-mid:  #0052cc;
+      --primary-dark: #001a52;
+      --accent:       #ffcd00;
+      --bg:           #f0f3f9;
+      --surface:      #ffffff;
+      --surface-2:    #f7f9fc;
+      --border:       #e2e8f0;
+      --text:         #1a202c;
+      --text-muted:   #64748b;
+      --text-light:   #94a3b8;
+      --radius:       12px;
+      --shadow-sm:    0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow:       0 4px 16px rgba(0,0,0,0.07), 0 2px 6px rgba(0,0,0,0.04);
+      --shadow-lg:    0 12px 40px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .app-header {
+      background: linear-gradient(140deg, var(--primary-dark) 0%, var(--primary) 55%, #0a4bba 100%);
+      padding: 0 24px;
+    }
+    .header-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 22px 0;
+    }
+    .brand {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 16px;
+    }
+    .brand-logo {
+      width: 38px; height: 38px;
+      background: var(--accent);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 800;
+      color: var(--primary-dark);
+      flex-shrink: 0;
+      text-decoration: none;
+    }
+    .brand-text { line-height: 1; }
+    .brand-name {
+      font-size: 17px; font-weight: 700;
+      color: rgba(255,255,255,0.95);
+      letter-spacing: -0.3px;
+      text-decoration: none;
+    }
+    .brand-name span { color: var(--accent); }
+    .brand-sub {
+      font-size: 11px; font-weight: 500;
+      color: rgba(255,255,255,0.45);
+      margin-top: 2px; letter-spacing: 0.3px;
+    }
+    .app-nav {
+      display: flex; align-items: center; gap: 4px;
+    }
+    .nav-link {
+      color: rgba(255,255,255,0.65);
+      text-decoration: none;
+      font-size: 13px; font-weight: 500;
+      padding: 5px 10px; border-radius: 6px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .nav-link:hover, .nav-link.active { color: white; background: rgba(255,255,255,0.1); }
+    .nav-spacer { flex: 1; }
+    .nav-user {
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+      margin-right: 4px;
+    }
+    .nav-btn-ghost {
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.8);
+      font-size: 12px; font-weight: 600;
+      padding: 5px 12px; border-radius: 6px;
+      text-decoration: none; border: none;
+      cursor: pointer; font-family: inherit;
+      transition: background 0.15s;
+    }
+    .nav-btn-ghost:hover { background: rgba(255,255,255,0.18); }
+
+    /* Main */
+    .main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 24px 56px;
+    }
+
+    .page-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .page-title { font-size: 20px; font-weight: 800; }
+    .page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+    .btn-primary {
+      padding: 10px 20px;
+      background: var(--primary);
+      color: white;
+      border: none; border-radius: 8px;
+      font-family: inherit;
+      font-size: 13px; font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-primary:hover { background: var(--primary-mid); }
+
+    /* Favorites grid */
+    .favorites-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+    }
+
+    .fav-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      transition: box-shadow 0.2s, transform 0.2s;
+      animation: fadeUp 0.3s ease both;
+    }
+    .fav-card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .fav-card-head {
+      padding: 16px 18px 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-2);
+    }
+    .fav-name {
+      font-size: 15px; font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .fav-route {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--text-muted); font-weight: 500;
+    }
+    .fav-route-arrow { color: var(--text-light); }
+
+    .fav-card-body { padding: 12px 18px; }
+    .fav-date {
+      font-size: 11px; color: var(--text-light);
+      margin-bottom: 12px;
+    }
+
+    .fav-actions {
+      display: flex; gap: 6px; flex-wrap: wrap;
+    }
+    .btn-action {
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 12px; font-weight: 600;
+      cursor: pointer;
+      background: var(--surface);
+      color: var(--text-muted);
+      transition: all 0.15s;
+    }
+    .btn-action:hover { border-color: var(--primary-mid); color: var(--primary-mid); background: #f0f6ff; }
+    .btn-action.plan { background: var(--primary); color: white; border-color: var(--primary); }
+    .btn-action.plan:hover { background: var(--primary-mid); border-color: var(--primary-mid); }
+    .btn-action.delete { color: #b91c1c; border-color: #fecaca; }
+    .btn-action.delete:hover { background: #fff5f5; border-color: #ef4444; }
+
+    /* Empty state */
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 64px 24px;
+      color: var(--text-muted);
+    }
+    .empty-icon { font-size: 48px; opacity: 0.25; margin-bottom: 12px; }
+    .empty-title { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .empty-sub { font-size: 13px; }
+
+    /* Loading */
+    .loading {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 48px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    /* Modal overlay */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000;
+      padding: 24px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+    .modal-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      padding: 30px;
+      width: 100%;
+      max-width: 440px;
+      transform: translateY(12px);
+      transition: transform 0.2s;
+    }
+    .modal-overlay.open .modal-card { transform: translateY(0); }
+
+    .modal-title {
+      font-size: 18px; font-weight: 800;
+      margin-bottom: 6px;
+    }
+    .modal-sub {
+      font-size: 12px; color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+    .modal-sub .method-badge {
+      display: inline-block;
+      padding: 1px 7px; border-radius: 4px;
+      font-weight: 700; font-size: 11px;
+      margin-right: 4px;
+    }
+    .badge-post   { background: #dcfce7; color: #15803d; }
+    .badge-put    { background: #dbeafe; color: #1d4ed8; }
+    .badge-patch  { background: #fef9c3; color: #a16207; }
+
+    .modal-form .form-group { margin-bottom: 16px; }
+    .modal-form label {
+      display: block;
+      font-size: 12px; font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin-bottom: 5px;
+    }
+    .modal-form input {
+      width: 100%;
+      padding: 10px 13px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px; font-weight: 500;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+      background: #fafbfd;
+    }
+    .modal-form input:focus { border-color: var(--primary-mid); background: white; }
+
+    .modal-error {
+      background: #fff5f5;
+      border: 1px solid #fecaca;
+      color: #b91c1c;
+      border-radius: 8px;
+      padding: 9px 13px;
+      font-size: 13px; font-weight: 500;
+      margin-bottom: 14px;
+      display: none;
+    }
+
+    .modal-footer {
+      display: flex; gap: 10px; justify-content: flex-end;
+      margin-top: 20px;
+    }
+    .btn-cancel {
+      padding: 9px 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: background 0.15s;
+    }
+    .btn-cancel:hover { background: var(--surface-2); }
+    .btn-save {
+      padding: 9px 20px;
+      background: var(--primary);
+      color: white;
+      border: none; border-radius: 8px;
+      font-family: inherit;
+      font-size: 13px; font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-save:hover { background: var(--primary-mid); }
+    .btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Autocomplete dropdown */
+    .ac-dropdown {
+      position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: var(--shadow-lg);
+      z-index: 2000;
+      max-height: 200px; overflow-y: auto;
+      display: none;
+    }
+    .ac-item {
+      padding: 9px 13px;
+      font-size: 13px; font-weight: 500;
+      color: var(--text);
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 7px;
+      transition: background 0.1s;
+    }
+    .ac-item:last-child { border-bottom: none; }
+    .ac-item::before { content: '📍'; font-size: 11px; opacity: 0.5; }
+    .ac-item:hover, .ac-item.active { background: #f0f6ff; color: var(--primary-mid); }
+  </style>
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand">
+        <a href="/" class="brand-logo">P</a>
+        <div class="brand-text">
+          <a href="/" class="brand-name">PTV <span>Journey Planner</span></a>
+          <div class="brand-sub">Melbourne Public Transport</div>
+        </div>
+      </div>
+      <nav class="app-nav">
+        <a href="/" class="nav-link">Journey Planner</a>
+        <a href="/favorites.html" class="nav-link active">Saved Routes</a>
+        <div class="nav-spacer"></div>
+        <span class="nav-user" id="navEmail"></span>
+        <button class="nav-btn-ghost" onclick="logout()">Logout</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="page-head">
+      <div>
+        <div class="page-title">Saved Routes</div>
+        <div class="page-subtitle">Your favourite journeys</div>
+      </div>
+      <button class="btn-primary" onclick="openModal('add')">+ Add New</button>
+    </div>
+
+    <div class="favorites-grid" id="favGrid">
+      <div class="loading">Loading…</div>
+    </div>
+  </main>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modalOverlay" onclick="closeModalOnBackdrop(event)">
+    <div class="modal-card">
+      <div class="modal-title" id="modalTitle">Add Route</div>
+      <div class="modal-sub" id="modalSub"></div>
+      <div class="modal-error" id="modalError"></div>
+      <form class="modal-form" id="modalForm" onsubmit="handleSubmit(event)">
+        <div class="form-group" id="nameGroup">
+          <label for="mName">Name</label>
+          <input type="text" id="mName" placeholder="e.g. Home to Work" required />
+        </div>
+        <div class="form-group" id="originGroup">
+          <label for="mOrigin">Origin</label>
+          <div style="position:relative">
+            <input type="text" id="mOrigin" placeholder="e.g. Flinders Street Station" required autocomplete="off" />
+            <div class="ac-dropdown" id="mOrigin-dropdown"></div>
+          </div>
+        </div>
+        <div class="form-group" id="destGroup">
+          <label for="mDest">Destination</label>
+          <div style="position:relative">
+            <input type="text" id="mDest" placeholder="e.g. Southern Cross Station" required autocomplete="off" />
+            <div class="ac-dropdown" id="mDest-dropdown"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+          <button type="submit" class="btn-save" id="modalSaveBtn">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('ptv_token');
+    const user = JSON.parse(localStorage.getItem('ptv_user') || 'null');
+
+    // Auth guard
+    if (!token) {
+      window.location.href = '/login.html';
+    }
+
+    document.getElementById('navEmail').textContent = user?.email || '';
+
+    function logout() {
+      localStorage.removeItem('ptv_token');
+      localStorage.removeItem('ptv_user');
+      window.location.href = '/login.html';
+    }
+
+    function authHeaders() {
+      return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
+    }
+
+    // ── State ─────────────────────────────────────────────────────────
+    let favorites = [];
+    let modalMode = 'add'; // 'add' | 'put' | 'patch'
+    let activeId = null;
+
+    // ── Fetch & render ────────────────────────────────────────────────
+    async function loadFavorites() {
+      try {
+        const res = await fetch('/favorites', { headers: authHeaders() });
+        if (res.status === 401) { logout(); return; }
+        favorites = await res.json();
+        renderGrid();
+      } catch {
+        document.getElementById('favGrid').innerHTML =
+          '<div class="loading">Failed to load saved routes.</div>';
+      }
+    }
+
+    function renderGrid() {
+      const grid = document.getElementById('favGrid');
+      if (favorites.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">🔖</div>
+            <div class="empty-title">No saved routes yet</div>
+            <div class="empty-sub">Click "Add New" to save your first favourite journey.</div>
+          </div>`;
+        return;
+      }
+
+      grid.innerHTML = favorites.map((f, i) => `
+        <div class="fav-card" style="animation-delay:${i * 0.05}s">
+          <div class="fav-card-head">
+            <div class="fav-name">${esc(f.name)}</div>
+            <div class="fav-route">
+              <span>${esc(f.origin)}</span>
+              <span class="fav-route-arrow">→</span>
+              <span>${esc(f.destination)}</span>
+            </div>
+          </div>
+          <div class="fav-card-body">
+            <div class="fav-date">Saved ${formatDate(f.createdAt)}</div>
+            <div class="fav-actions">
+              <button class="btn-action plan" onclick="planJourney('${esc(f.origin)}', '${esc(f.destination)}')">Plan</button>
+              <button class="btn-action" onclick="openModal('patch', '${f._id}', '${esc(f.name)}', '${esc(f.origin)}', '${esc(f.destination)}')">Rename</button>
+              <button class="btn-action" onclick="openModal('put', '${f._id}', '${esc(f.name)}', '${esc(f.origin)}', '${esc(f.destination)}')">Edit All</button>
+              <button class="btn-action delete" onclick="deleteFavorite('${f._id}')">Delete</button>
+            </div>
+          </div>
+        </div>`).join('');
+    }
+
+    function esc(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function formatDate(iso) {
+      return new Date(iso).toLocaleDateString('en-AU', {
+        day: 'numeric', month: 'short', year: 'numeric'
+      });
+    }
+
+    function planJourney(origin, destination) {
+      window.location.href = `/?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`;
+    }
+
+    // ── Modal ─────────────────────────────────────────────────────────
+    function openModal(mode, id = null, name = '', origin = '', destination = '') {
+      modalMode = mode;
+      activeId = id;
+
+      const overlay = document.getElementById('modalOverlay');
+      const titleEl = document.getElementById('modalTitle');
+      const subEl = document.getElementById('modalSub');
+      const nameInput = document.getElementById('mName');
+      const originInput = document.getElementById('mOrigin');
+      const destInput = document.getElementById('mDest');
+      const originGroup = document.getElementById('originGroup');
+      const destGroup = document.getElementById('destGroup');
+
+      document.getElementById('modalError').style.display = 'none';
+
+      if (mode === 'add') {
+        titleEl.textContent = 'Add Saved Route';
+        subEl.innerHTML = '<span class="method-badge badge-post">POST</span> Creates a new favourite';
+        nameInput.value = ''; originInput.value = ''; destInput.value = '';
+        originGroup.style.display = ''; destGroup.style.display = '';
+        document.getElementById('mName').required = true;
+        document.getElementById('mOrigin').required = true;
+        document.getElementById('mDest').required = true;
+      } else if (mode === 'put') {
+        titleEl.textContent = 'Edit Route';
+        subEl.innerHTML = '<span class="method-badge badge-put">PUT</span> Full update — all fields required';
+        nameInput.value = name; originInput.value = origin; destInput.value = destination;
+        originGroup.style.display = ''; destGroup.style.display = '';
+        document.getElementById('mOrigin').required = true;
+        document.getElementById('mDest').required = true;
+      } else if (mode === 'patch') {
+        titleEl.textContent = 'Rename Route';
+        subEl.innerHTML = '<span class="method-badge badge-patch">PATCH</span> Partial update — only the name changes';
+        nameInput.value = name;
+        originGroup.style.display = 'none'; destGroup.style.display = 'none';
+        document.getElementById('mOrigin').required = false;
+        document.getElementById('mDest').required = false;
+      }
+
+      overlay.classList.add('open');
+      setTimeout(() => nameInput.focus(), 100);
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.remove('open');
+    }
+
+    function closeModalOnBackdrop(e) {
+      if (e.target === document.getElementById('modalOverlay')) closeModal();
+    }
+
+    async function handleSubmit(e) {
+      e.preventDefault();
+      const saveBtn = document.getElementById('modalSaveBtn');
+      const errorEl = document.getElementById('modalError');
+      errorEl.style.display = 'none';
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving…';
+
+      const name = document.getElementById('mName').value.trim();
+      const origin = document.getElementById('mOrigin').value.trim();
+      const destination = document.getElementById('mDest').value.trim();
+
+      try {
+        let res;
+        if (modalMode === 'add') {
+          res = await fetch('/favorites', {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify({ name, origin, destination })
+          });
+        } else if (modalMode === 'put') {
+          res = await fetch(`/favorites/${activeId}`, {
+            method: 'PUT',
+            headers: authHeaders(),
+            body: JSON.stringify({ name, origin, destination })
+          });
+        } else if (modalMode === 'patch') {
+          res = await fetch(`/favorites/${activeId}`, {
+            method: 'PATCH',
+            headers: authHeaders(),
+            body: JSON.stringify({ name })
+          });
+        }
+
+        const data = await res.json();
+        if (!res.ok) {
+          errorEl.textContent = data.error;
+          errorEl.style.display = 'block';
+          return;
+        }
+
+        closeModal();
+        await loadFavorites();
+      } catch {
+        errorEl.textContent = 'Request failed. Please try again.';
+        errorEl.style.display = 'block';
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save';
+      }
+    }
+
+    // ── Delete ────────────────────────────────────────────────────────
+    async function deleteFavorite(id) {
+      if (!confirm('Delete this saved route?')) return;
+      try {
+        const res = await fetch(`/favorites/${id}`, {
+          method: 'DELETE',
+          headers: authHeaders()
+        });
+        if (res.status === 401) { logout(); return; }
+        if (res.ok) {
+          favorites = favorites.filter(f => f._id !== id);
+          renderGrid();
+        }
+      } catch {
+        alert('Failed to delete. Please try again.');
+      }
+    }
+
+    // ── Autocomplete ──────────────────────────────────────────────────
+    const acTimers = {};
+
+    function setupAutocomplete(inputId) {
+      const input    = document.getElementById(inputId);
+      const dropdown = document.getElementById(`${inputId}-dropdown`);
+      let items = [];
+      let activeIndex = -1;
+
+      input.addEventListener('input', () => {
+        clearTimeout(acTimers[inputId]);
+        const val = input.value.trim();
+        if (val.length < 2) { dropdown.style.display = 'none'; return; }
+
+        acTimers[inputId] = setTimeout(async () => {
+          try {
+            const res  = await fetch(`/autocomplete?input=${encodeURIComponent(val)}`);
+            const data = await res.json();
+            items = data.suggestions || [];
+            activeIndex = -1;
+            if (!items.length) { dropdown.style.display = 'none'; return; }
+            dropdown.innerHTML = items.map((s, i) =>
+              `<div class="ac-item" data-i="${i}">${s.text}</div>`
+            ).join('');
+            dropdown.querySelectorAll('.ac-item').forEach(el => {
+              el.addEventListener('mousedown', () => {
+                input.value = items[Number(el.dataset.i)].text;
+                dropdown.style.display = 'none';
+              });
+            });
+            dropdown.style.display = 'block';
+          } catch { dropdown.style.display = 'none'; }
+        }, 300);
+      });
+
+      input.addEventListener('keydown', e => {
+        const els = dropdown.querySelectorAll('.ac-item');
+        if (e.key === 'ArrowDown')       activeIndex = Math.min(activeIndex + 1, els.length - 1);
+        else if (e.key === 'ArrowUp')    activeIndex = Math.max(activeIndex - 1, 0);
+        else if (e.key === 'Escape')     dropdown.style.display = 'none';
+        else if (e.key === 'Enter' && activeIndex >= 0) {
+          e.preventDefault();
+          input.value = items[activeIndex].text;
+          dropdown.style.display = 'none';
+        }
+        els.forEach((el, i) => el.classList.toggle('active', i === activeIndex));
+      });
+
+      input.addEventListener('blur', () =>
+        setTimeout(() => { dropdown.style.display = 'none'; }, 150)
+      );
+    }
+
+    setupAutocomplete('mOrigin');
+    setupAutocomplete('mDest');
+
+    // ── Init ──────────────────────────────────────────────────────────
+    loadFavorites();
+  </script>
+</body>
+</html>
