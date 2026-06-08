@@ -120,6 +120,11 @@
       font-size: 13px; color: #15803d; font-weight: 600;
       display: none;
     }
+    .save-error {
+      font-size: 13px; color: #b91c1c; font-weight: 600;
+      display: none;
+      margin-left: 8px;
+    }
 
     /* ── Header ────────────────────────────────────────────────────── */
     .app-header {
@@ -235,6 +240,74 @@
     }
     .search-btn:active { transform: translateY(0); box-shadow: none; }
     .search-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .poi-card {
+      background: #eef4ff;
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      border-radius: var(--radius);
+      padding: 24px 26px;
+      margin-bottom: 26px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    }
+    .poi-card .section-head { margin-bottom: 18px; }
+    .poi-card .section-head h2 { color: var(--primary-dark); }
+    .poi-card label { color: var(--primary-dark); }
+    .poi-card .checkbox { color: #ffffff !important; }
+    .checkbox-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .checkbox {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 18px;
+      background: var(--primary);
+      border: 1px solid rgba(0, 48, 130, 0.35);
+      border-radius: 16px;
+      min-height: 60px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 14px;
+      color: #ffffff;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      transition: background 0.15s, border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    .checkbox:hover {
+      background: var(--primary-mid);
+      border-color: rgba(0, 48, 130, 0.6);
+      transform: translateY(-1px);
+    }
+    .checkbox input {
+      width: 20px;
+      height: 20px;
+      accent-color: white;
+      border-radius: 6px;
+    }
+    .checkbox input:checked {
+      filter: none;
+    }
+    .poi-status { margin-top: 10px; min-height: 18px; font-size: 13px; }
+    .poi-selection-summary { margin-top: 10px; font-size: 13px; color: #0f172a; font-weight: 600; }
+    .poi-select-btn {
+      margin-top: 10px;
+      border: 1px solid rgba(0, 48, 130, 0.35);
+      background: white;
+      color: var(--primary-dark);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .poi-select-btn.selected {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
 
     /* Location button */
     .loc-btn {
@@ -396,6 +469,10 @@
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .leg-stops span { color: var(--text-light); margin: 0 4px; }
+    .leg-meta {
+      font-size: 12px; color: #475569; margin-top: 6px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
 
     .leg-mode {
       display: flex; flex-direction: column; align-items: center; gap: 4px;
@@ -560,6 +637,32 @@
   </header>
 
   <main class="main">
+    <div class="poi-card">
+      <div class="section-head">
+        <h2>Find nearby points of interest</h2>
+        <span class="section-badge">Google Places</span>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex: 1 1 100%; min-width: 220px;">
+          <label>Categories</label>
+          <div class="checkbox-grid" id="poiCategories">
+            <label class="checkbox"><input type="checkbox" value="coffee" checked> Coffee</label>
+            <label class="checkbox"><input type="checkbox" value="restaurant" checked> Restaurant</label>
+            <label class="checkbox"><input type="checkbox" value="hotel" checked> Hotel</label>
+            <label class="checkbox"><input type="checkbox" value="hospital"> Hospital</label>
+            <label class="checkbox"><input type="checkbox" value="public toilet"> Public toilet</label>
+            <label class="checkbox"><input type="checkbox" value="bar"> Bar</label>
+            <label class="checkbox"><input type="checkbox" value="night club"> Night club</label>
+            <label class="checkbox"><input type="checkbox" value="museum"> Museum</label>
+          </div>
+        </div>
+        <button class="search-btn" id="poiSearchBtn" onclick="searchTargetPlaces()">Find nearby places</button>
+      </div>
+      <div id="poiStatus" class="poi-status"></div>
+      <div id="poiSelectionSummary" class="poi-selection-summary">Selected places: 0</div>
+      <div id="poiResults"></div>
+    </div>
+
     <div id="results">
       <!-- Save as Favorite banner -->
       <div class="save-banner" id="saveBanner">
@@ -567,6 +670,7 @@
         <input type="text" id="saveNameInput" placeholder="Name this route…" maxlength="60" />
         <button class="save-banner-btn" id="saveBannerBtn" onclick="saveJourney()">Save</button>
         <span class="save-success" id="saveSuccess">Saved!</span>
+        <span class="save-error" id="saveError"></span>
       </div>
 
       <div class="summary-strip">
@@ -675,18 +779,26 @@
       if (!name) { document.getElementById('saveNameInput').focus(); return; }
       const btn = document.getElementById('saveBannerBtn');
       const successEl = document.getElementById('saveSuccess');
+      const saveErrorEl = document.getElementById('saveError');
       btn.disabled = true;
+      saveErrorEl.style.display = 'none';
+      saveErrorEl.textContent = '';
       try {
         const res = await fetch('/favorites', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_token}` },
-          body: JSON.stringify({ name, origin: _lastOrigin, destination: _lastDestination })
+          body: JSON.stringify({ name, origin: _lastOrigin, destination: _lastDestination, places: getSelectedPoiPlaces() })
         });
         if (res.status === 401) { window.location.href = '/login.html'; return; }
         if (res.ok) {
           successEl.style.display = 'inline';
+          saveErrorEl.style.display = 'none';
           btn.style.display = 'none';
           setTimeout(() => { successEl.style.display = 'none'; btn.style.display = ''; }, 3000);
+        } else {
+          const data = await res.json().catch(() => ({}));
+          saveErrorEl.textContent = data.error || 'Could not save journey';
+          saveErrorEl.style.display = 'block';
         }
       } finally {
         btn.disabled = false;
@@ -867,6 +979,145 @@
 
     setupAutocomplete('origin');
     setupAutocomplete('destination');
+
+    const POI_CATEGORIES = [
+      'coffee', 'restaurant', 'hotel', 'hospital',
+      'public toilet', 'bar', 'night club', 'museum'
+    ];
+
+    const selectedPoiPlaces = new Map();
+    let poiPlaceCache = new Map();
+
+    function updatePoiSelectionSummary() {
+      const count = selectedPoiPlaces.size;
+      document.getElementById('poiSelectionSummary').textContent = `Selected places: ${count}`;
+    }
+
+    function togglePoiPlace(placeKey) {
+      const place = poiPlaceCache.get(placeKey);
+      if (!place) return;
+      if (selectedPoiPlaces.has(placeKey)) {
+        selectedPoiPlaces.delete(placeKey);
+      } else {
+        selectedPoiPlaces.set(placeKey, place);
+      }
+      updatePoiSelectionSummary();
+      const btn = document.querySelector(`[data-place-key="${placeKey.replace(/"/g, '&quot;')}"]`);
+      if (btn) {
+        const selected = selectedPoiPlaces.has(placeKey);
+        btn.classList.toggle('selected', selected);
+        btn.textContent = selected ? 'Selected' : 'Save place';
+      }
+    }
+
+    document.getElementById('poiResults').addEventListener('click', event => {
+      const btn = event.target.closest('.poi-select-btn');
+      if (!btn) return;
+      const placeKey = btn.dataset.placeKey;
+      if (!placeKey) return;
+      togglePoiPlace(placeKey);
+    });
+
+    function getSelectedPoiPlaces() {
+      return Array.from(selectedPoiPlaces.values());
+    }
+
+    function getSelectedCategories() {
+      return Array.from(document.querySelectorAll('#poiCategories input:checked'))
+        .map(input => input.value)
+        .filter(Boolean);
+    }
+
+    function renderPoiPlaceItem(place) {
+      const placeKey = place.place_id || `${place.name}:${place.address}`;
+      const selected = selectedPoiPlaces.has(placeKey);
+      poiPlaceCache.set(placeKey, place);
+      const openText = place.open_now === true ? 'Open now' : place.open_now === false ? 'Closed' : 'Hours unknown';
+      const ratingText = place.rating ? `⭐ ${place.rating} (${place.user_ratings_total || 0})` : '';
+      const distanceText = place.distance_meters != null ? `${place.distance_meters} m away` : '';
+      const walkText = place.walking_minutes != null ? `${place.walking_minutes} min walk` : '';
+      const extraText = [distanceText, walkText].filter(Boolean).join(' · ');
+      return `
+        <div class="leg-card" style="margin-bottom:10px;">
+          <div class="leg-header">
+            <div class="leg-step">•</div>
+            <div class="leg-info">
+              <div class="leg-line">${place.name}</div>
+              <div class="leg-stops">${place.address || 'Address unavailable'}</div>
+            </div>
+            <div class="leg-mode" style="min-width:110px;">
+              <span class="mode-chip" style="background:#ffcd00;color:#001a52;">${openText}</span>
+            </div>
+          </div>
+          <div class="leg-body" style="padding-top:6px;">
+            ${extraText ? `<div style="margin-top:10px;font-size:13px;color:#0f172a;font-weight:600;">${extraText}</div>` : ''}
+            ${ratingText ? `<div style="margin-top:6px;font-size:13px;color:#475569;">${ratingText}</div>` : ''}
+            <button type="button" class="poi-select-btn${selected ? ' selected' : ''}" data-place-key="${placeKey.replace(/"/g, '&quot;')}">
+              ${selected ? 'Selected' : 'Save place'}
+            </button>
+          </div>
+        </div>`;
+    }
+
+    function renderPoiResults(data) {
+      const container = document.getElementById('poiResults');
+      if (!data.categories || data.categories.length === 0) {
+        container.innerHTML = '<div class="empty-state">No POI categories returned.</div>';
+        return;
+      }
+
+      container.innerHTML = data.categories.map(category => {
+        const places = category.places || [];
+        return `
+          <div class="section-head" style="margin-top:20px;">
+            <h2>${category.label}</h2>
+            <span class="section-badge">${places.length} result${places.length !== 1 ? 's' : ''}</span>
+          </div>
+          ${places.length === 0 ? '<div class="empty-state">No places found for this category.</div>' : places.map(renderPoiPlaceItem).join('')}`;
+      }).join('');
+    }
+
+    async function searchTargetPlaces() {
+      const destination = document.getElementById('destination').value.trim();
+      const statusEl    = document.getElementById('poiStatus');
+      const resultsEl   = document.getElementById('poiResults');
+      const btn         = document.getElementById('poiSearchBtn');
+      const categories  = getSelectedCategories();
+
+      if (!destination) {
+        statusEl.innerHTML = '<span class="status-error">Please enter the destination above.</span>';
+        return;
+      }
+      if (categories.length === 0) {
+        statusEl.innerHTML = '<span class="status-error">Select at least one category.</span>';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Finding nearby places…';
+      statusEl.innerHTML = `<span class="status-loading"><span class="spinner"></span>Searching for nearby places…</span>`;
+      resultsEl.innerHTML = '';
+
+      try {
+        const res  = await fetch(`/target-places?destination=${encodeURIComponent(destination)}&categories=${encodeURIComponent(categories.join(','))}`);
+        const data = await res.json();
+        if (!res.ok) {
+          const msg = typeof data.error === 'object' ? JSON.stringify(data.error, null, 2) : data.error;
+          statusEl.innerHTML = `<span class="status-error">${msg}</span>`;
+          return;
+        }
+
+        statusEl.innerHTML = `<span style="color:#166534;font-weight:600;">Found ${data.categories.reduce((sum, c) => sum + (c.places?.length || 0), 0)} POIs within 500m of ${data.destination}.</span>`;
+        selectedPoiPlaces.clear();
+        renderPoiResults(data);
+        updatePoiSelectionSummary();
+      } catch (err) {
+        statusEl.innerHTML = `<span class="status-error">Request failed: ${err.message}</span>`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Find nearby places';
+      }
+    }
 
     // ── Render leg ──────────────────────────────────────────────────
     function renderLeg(leg, index, total) {

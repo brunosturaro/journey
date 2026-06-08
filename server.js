@@ -9,6 +9,7 @@ const { getAlerts } = require('./services/alerts');
 const { getJourney } = require('./services/journey');
 const { getPtvLeg } = require('./services/ptvLeg');
 const { getCommonAlerts } = require('./services/commonAlerts');
+const { getTargetPlaces } = require('./services/places');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./swagger');
 const { v4: uuidv4, validate: uuidValidate } = require('uuid');
@@ -157,6 +158,22 @@ app.get('/autocomplete', async (req, res) => {
   } catch (err) {
     const detail = err.response?.data || err.message;
     console.error('[autocomplete]', JSON.stringify(detail));
+    res.status(500).json({ error: detail });
+  }
+});
+
+// GET /target-places?destination=...&categories=coffee,hotel,restaurant
+app.get('/target-places', async (req, res) => {
+  const { destination, categories } = req.query;
+  if (!destination) return res.status(400).json({ error: 'destination is required' });
+
+  try {
+    const result = await getTargetPlaces(destination, categories, process.env.GOOGLE_MAPS_API_KEY);
+    if (!result) return res.status(404).json({ error: 'Destination could not be located' });
+    res.json(result);
+  } catch (err) {
+    const detail = err.response?.data || err.message;
+    console.error('[target-places]', JSON.stringify(detail));
     res.status(500).json({ error: detail });
   }
 });

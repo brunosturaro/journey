@@ -350,6 +350,75 @@ module.exports = {
       }
     },
 
+    '/target-places': {
+      get: {
+        summary: 'Find nearby amenities around a destination',
+        description: 'Uses Google Places API to return nearby points of interest around the target destination within walking distance.',
+        parameters: [
+          { name: 'destination', in: 'query', required: true, schema: { type: 'string' }, example: 'Southern Cross Station, Melbourne' },
+          { name: 'categories', in: 'query', required: false, schema: { type: 'string' }, example: 'coffee,restaurant,hotel' }
+        ],
+        responses: {
+          200: {
+            description: 'Nearby places by category',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    destination: { type: 'string', example: 'Southern Cross Station, Melbourne VIC, Australia' },
+                    location: {
+                      type: 'object',
+                      properties: {
+                        lat: { type: 'number', example: -37.8183 },
+                        lng: { type: 'number', example: 144.9520 }
+                      }
+                    },
+                    categories: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          category: { type: 'string', example: 'coffee' },
+                          label: { type: 'string', example: 'Coffee' },
+                          places: {
+                            type: 'array',
+                            items: {
+                              type: 'object',
+                              properties: {
+                                name: { type: 'string', example: 'Brother Baba Budan' },
+                                address: { type: 'string', example: '359 Little Bourke St, Melbourne VIC' },
+                                place_id: { type: 'string', example: 'ChIJ...' },
+                                location: {
+                                  type: 'object',
+                                  properties: {
+                                    lat: { type: 'number', example: -37.814 },
+                                    lng: { type: 'number', example: 144.963 }
+                                  }
+                                },
+                                rating: { type: 'number', example: 4.6 },
+                                user_ratings_total: { type: 'integer', example: 1200 },
+                                open_now: { type: 'boolean', example: true },
+                                distance_meters: { type: 'integer', example: 320 },
+                                walking_minutes: { type: 'integer', example: 4 }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          400: { description: 'Missing destination' },
+          404: { description: 'Destination could not be located' },
+          500: { description: 'Server error' }
+        }
+      }
+    },
+
     '/ptv-leg': {
       get: {
         summary: 'Get upcoming PTV departures from a stop',

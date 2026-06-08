@@ -166,7 +166,12 @@
     .fav-card-body { padding: 12px 18px; }
     .fav-date {
       font-size: 11px; color: var(--text-light);
-      margin-bottom: 12px;
+      margin-bottom: 8px;
+    }
+    .fav-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
     }
 
     .fav-actions {
@@ -258,6 +263,54 @@
       color: var(--text-muted);
       text-transform: uppercase; letter-spacing: 0.5px;
       margin-bottom: 5px;
+    }
+    .modal-places {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .place-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      align-items: center;
+    }
+    @media (min-width: 600px) {
+      .place-row {
+        grid-template-columns: minmax(160px, 1fr) minmax(180px, 1.5fr);
+      }
+    }
+    .place-meta {
+      display: grid;
+      gap: 4px;
+    }
+    .place-category {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .place-current {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .place-row select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--text);
+      background: #fafbfd;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .place-row select:focus {
+      border-color: var(--primary-mid);
+      background: white;
     }
     .modal-form input {
       width: 100%;
@@ -398,6 +451,10 @@
             <div class="ac-dropdown" id="mDest-dropdown"></div>
           </div>
         </div>
+        <div class="form-group" id="placesGroup" style="display:none;">
+          <label>Saved places</label>
+          <div id="modalPlaces" class="modal-places"></div>
+        </div>
         <div class="modal-footer">
           <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
           <button type="submit" class="btn-save" id="modalSaveBtn">Save</button>
@@ -431,6 +488,9 @@
     let favorites = [];
     let modalMode = 'add'; // 'add' | 'put' | 'patch'
     let activeId = null;
+    let modalPlaces = [];
+    let modalAlternatives = {};
+    let modalDestination = '';
 
     // ── Fetch & render ────────────────────────────────────────────────
     async function loadFavorites() {
@@ -469,10 +529,11 @@
           </div>
           <div class="fav-card-body">
             <div class="fav-date">Saved ${formatDate(f.createdAt)}</div>
+            ${f.places?.length ? `<div class="fav-meta">${f.places.length} saved place${f.places.length !== 1 ? 's' : ''}</div>` : ''}
             <div class="fav-actions">
-              <button class="btn-action plan" onclick="planJourney('${esc(f.origin)}', '${esc(f.destination)}')">Plan</button>
-              <button class="btn-action" onclick="openModal('patch', '${f._id}', '${esc(f.name)}', '${esc(f.origin)}', '${esc(f.destination)}')">Rename</button>
-              <button class="btn-action" onclick="openModal('put', '${f._id}', '${esc(f.name)}', '${esc(f.origin)}', '${esc(f.destination)}')">Edit All</button>
+              <button class="btn-action plan" onclick="planJourney(${JSON.stringify(f.origin)}, ${JSON.stringify(f.destination)})">Plan</button>
+              <button class="btn-action" onclick="openModal('patch', '${f._id}')">Rename</button>
+              <button class="btn-action" onclick="openModal('put', '${f._id}')">Edit All</button>
               <button class="btn-action delete" onclick="deleteFavorite('${f._id}')">Delete</button>
             </div>
           </div>
@@ -499,7 +560,7 @@
     }
 
     // ── Modal ─────────────────────────────────────────────────────────
-    function openModal(mode, id = null, name = '', origin = '', destination = '') {
+    async function openModal(mode, id = null) {
       modalMode = mode;
       activeId = id;
 
@@ -511,43 +572,163 @@
       const destInput = document.getElementById('mDest');
       const originGroup = document.getElementById('originGroup');
       const destGroup = document.getElementById('destGroup');
+      const placesGroup = document.getElementById('placesGroup');
 
       document.getElementById('modalError').style.display = 'none';
+      modalAlternatives = {};
+      modalDestination = '';
 
       if (mode === 'add') {
         titleEl.textContent = 'Add Saved Route';
         subEl.innerHTML = '<span class="method-badge badge-post">POST</span> Creates a new favourite';
         nameInput.value = ''; originInput.value = ''; destInput.value = '';
         originGroup.style.display = ''; destGroup.style.display = '';
+        placesGroup.style.display = 'none';
+        modalPlaces = [];
+        renderModalPlaces();
         document.getElementById('mName').required = true;
         document.getElementById('mOrigin').required = true;
         document.getElementById('mDest').required = true;
       } else if (mode === 'put') {
+        const fav = favorites.find(f => f._id === id);
+        if (!fav) return;
         titleEl.textContent = 'Edit Route';
         subEl.innerHTML = '<span class="method-badge badge-put">PUT</span> Full update — all fields required';
-        nameInput.value = name; originInput.value = origin; destInput.value = destination;
-        originGroup.style.display = ''; destGroup.style.display = '';
+        nameInput.value = fav.name;
+        originInput.value = fav.origin;
+        destInput.value = fav.destination;
+        originGroup.style.display = '';
+        destGroup.style.display = '';
+        placesGroup.style.display = '';
+        modalPlaces = fav.places ? JSON.parse(JSON.stringify(fav.places)) : [];
+        await refreshModalAlternatives(destInput.value, modalPlaces.map(p => p.category));
+        renderModalPlaces();
         document.getElementById('mOrigin').required = true;
         document.getElementById('mDest').required = true;
       } else if (mode === 'patch') {
         titleEl.textContent = 'Rename Route';
         subEl.innerHTML = '<span class="method-badge badge-patch">PATCH</span> Partial update — only the name changes';
-        nameInput.value = name;
+        const fav = favorites.find(f => f._id === id);
+        nameInput.value = fav?.name || '';
         originGroup.style.display = 'none'; destGroup.style.display = 'none';
+        placesGroup.style.display = 'none';
+        modalPlaces = [];
+        renderModalPlaces();
         document.getElementById('mOrigin').required = false;
         document.getElementById('mDest').required = false;
       }
 
       overlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
       setTimeout(() => nameInput.focus(), 100);
     }
 
     function closeModal() {
       document.getElementById('modalOverlay').classList.remove('open');
+      document.body.style.overflow = '';
     }
 
     function closeModalOnBackdrop(e) {
       if (e.target === document.getElementById('modalOverlay')) closeModal();
+    }
+
+    function formatPlaceOption(place) {
+      const name = esc(place.name || 'Unnamed');
+      const address = place.address ? ` / ${esc(place.address)}` : '';
+      const distance = place.distance_meters != null ? ` · ${place.distance_meters}m` : '';
+      return `${name}${address}${distance}`;
+    }
+
+    function renderModalPlaces() {
+      const container = document.getElementById('modalPlaces');
+      if (!modalPlaces.length) {
+        container.innerHTML = '<div class="empty-state">This route has no saved places.</div>';
+        return;
+      }
+
+      container.innerHTML = modalPlaces.map((place, index) => {
+        const category = place.category || 'unknown';
+        const alternatives = modalAlternatives[category] || [];
+        const options = alternatives.length > 0
+          ? alternatives.map(option => `
+              <option value="${esc(option.place_id || '')}" ${option.place_id === place.place_id ? 'selected' : ''}>
+                ${formatPlaceOption(option)}
+              </option>`).join('')
+          : `<option disabled selected>No alternatives found for ${esc(category)}</option>`;
+
+        return `
+          <div class="place-row" data-index="${index}">
+            <div class="place-meta">
+              <div class="place-category">${esc(category)}</div>
+              <div class="place-current">${esc(place.name || 'Unknown place')}</div>
+            </div>
+            <select onchange="handlePlaceSelect(${index}, this.value)">
+              ${options}
+            </select>
+          </div>`;
+      }).join('');
+    }
+
+    async function refreshModalAlternatives(destination, categories) {
+      const dest = String(destination || '').trim();
+      if (!dest || !categories.length) {
+        modalAlternatives = {};
+        modalDestination = dest;
+        renderModalPlaces();
+        return;
+      }
+
+      try {
+        const uniqueCategories = [...new Set(categories.filter(Boolean))];
+        const res = await fetch(`/target-places?destination=${encodeURIComponent(dest)}&categories=${encodeURIComponent(uniqueCategories.join(','))}`);
+        if (!res.ok) {
+          modalAlternatives = {};
+        } else {
+          const data = await res.json();
+          modalAlternatives = {};
+          (data.categories || []).forEach(category => {
+            modalAlternatives[category.category] = category.places || [];
+          });
+          if (dest !== modalDestination) {
+            applyAlternativesToModalPlaces();
+          }
+        }
+      } catch {
+        modalAlternatives = {};
+      }
+      modalDestination = dest;
+      renderModalPlaces();
+    }
+
+    function applyAlternativesToModalPlaces() {
+      modalPlaces = modalPlaces.map(place => {
+        const category = place.category || 'unknown';
+        const alternatives = modalAlternatives[category] || [];
+        const matched = alternatives.find(option => option.place_id === place.place_id);
+        const replacement = matched || alternatives[0];
+        return replacement ? { ...replacement, category } : place;
+      });
+    }
+
+    function handlePlaceSelect(index, placeId) {
+      const place = modalPlaces[index];
+      if (!place) return;
+      const category = place.category || 'unknown';
+      const alternatives = modalAlternatives[category] || [];
+      const selected = alternatives.find(option => option.place_id === placeId);
+      if (!selected) return;
+      modalPlaces[index] = { ...selected, category };
+      renderModalPlaces();
+    }
+
+    function removeModalPlace(index) {
+      modalPlaces.splice(index, 1);
+      renderModalPlaces();
+    }
+
+    function updateModalPlace(index, key, value) {
+      if (!modalPlaces[index]) return;
+      modalPlaces[index][key] = value;
     }
 
     async function handleSubmit(e) {
@@ -574,7 +755,7 @@
           res = await fetch(`/favorites/${activeId}`, {
             method: 'PUT',
             headers: authHeaders(),
-            body: JSON.stringify({ name, origin, destination })
+            body: JSON.stringify({ name, origin, destination, places: modalPlaces })
           });
         } else if (modalMode === 'patch') {
           res = await fetch(`/favorites/${activeId}`, {
@@ -675,6 +856,13 @@
 
     setupAutocomplete('mOrigin');
     setupAutocomplete('mDest');
+
+    document.getElementById('mDest').addEventListener('blur', async () => {
+      if (modalMode !== 'put') return;
+      const destination = document.getElementById('mDest').value.trim();
+      if (!destination || destination === modalDestination) return;
+      await refreshModalAlternatives(destination, modalPlaces.map(p => p.category));
+    });
 
     // ── Init ──────────────────────────────────────────────────────────
     loadFavorites();
