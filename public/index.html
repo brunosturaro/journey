@@ -292,6 +292,32 @@
     }
     .poi-status { margin-top: 10px; min-height: 18px; font-size: 13px; }
     .poi-selection-summary { margin-top: 10px; font-size: 13px; color: #0f172a; font-weight: 600; }
+    .poi-legend {
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .poi-legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .poi-legend-swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(255,255,255,0.85);
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.06);
+      flex-shrink: 0;
+    }
     .poi-select-btn {
       margin-top: 10px;
       border: 1px solid rgba(0, 48, 130, 0.35);
@@ -660,6 +686,7 @@
       </div>
       <div id="poiStatus" class="poi-status"></div>
       <div id="poiSelectionSummary" class="poi-selection-summary">Selected places: 0</div>
+      <div id="poiLegend" class="poi-legend"></div>
       <div id="poiResults"></div>
     </div>
 
@@ -698,6 +725,10 @@
         <div>
           <div class="map-card">
             <div class="map-card-head">🗺 Route map</div>
+            <div id="mapEmpty" class="map-empty" style="display:none;">
+              <div class="map-empty-icon">🗺</div>
+              Map unavailable — PTV stops not found
+            </div>
             <div id="map"></div>
           </div>
         </div>
@@ -833,11 +864,25 @@
       return m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${m} m`;
     }
 
+    function esc(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
     // ── Maps API ────────────────────────────────────────────────────
     let map, directionsService, directionsRenderer;
     let infoWindows = [];
+    let poiMapMarkers = [], poiMapInfoWindow;
+    let mapsApiPromise = null;
 
     async function loadMapsApi() {
+      if (mapsApiPromise) return mapsApiPromise;
+
+      mapsApiPromise = (async () => {
       const cfg = await fetch('/config').then(r => r.json());
       await new Promise((resolve, reject) => {
         const script = document.createElement('script');
@@ -859,11 +904,102 @@
       });
       directionsService = new google.maps.DirectionsService();
       directionsRenderer = new google.maps.DirectionsRenderer({ map, suppressMarkers: true });
+      })();
+
+      return mapsApiPromise;
+    }
+
+    function clearPoiMarkers() {
+      poiMapMarkers.forEach(marker => marker.setMap(null));
+      poiMapMarkers = [];
+      if (poiMapInfoWindow) poiMapInfoWindow.close();
+    }
+
+    function showPoiOnExistingMap(data) {
+      if (!map) return;
+
+      const places = (data.categories || [])
+        .flatMap(category => (category.places || []).map(place => ({ ...place, category: category.category || place.category })))
+        .filter(place => place.location && place.location.lat != null && place.location.lng != null);
+
+      clearPoiMarkers();
+
+      if (!places.length) return;
+
+      if (!poiMapInfoWindow) {
+        poiMapInfoWindow = new google.maps.InfoWindow();
+      }
+
+      const bounds = new google.maps.LatLngBounds();
+      places.forEach((place, index) => {
+        const position = {
+          lat: Number(place.location.lat),
+          lng: Number(place.location.lng)
+        };
+        const marker = new google.maps.Marker({
+          position,
+          map,
+          label: {
+            text: String(index + 1),
+            color: 'white',
+            fontWeight: '700',
+            fontSize: '12px'
+          },
+          title: place.name || 'POI',
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 10,
+            fillColor: getPoiColor(place.category),
+            fillOpacity: 1,
+            strokeColor: '#001a52',
+            strokeWeight: 2.5
+          }
+        });
+
+        marker.addListener('click', () => {
+          poiMapInfoWindow.setContent(`
+            <div style="font-family:Inter,sans-serif;font-size:13px;line-height:1.5;max-width:220px;">
+              <strong style="color:#1a202c;">${esc(place.name || 'Unnamed place')}</strong><br/>
+              <span style="color:#64748b;">${esc(place.category || 'Unknown category')}</span><br/>
+              <span style="color:#475569;">${esc(place.address || 'Address unavailable')}</span>
+            </div>`);
+          poiMapInfoWindow.open(map, marker);
+        });
+
+        poiMapMarkers.push(marker);
+        bounds.extend(position);
+      });
+
+      if (places.length === 1) {
+        map.setCenter(bounds.getCenter());
+        map.setZoom(Math.max(map.getZoom() || 14, 15));
+      } else {
+        map.fitBounds(bounds, 48);
+      }
+    }
+
+    function setRouteMapState(hasRoute) {
+      const mapEl = document.getElementById('map');
+      const emptyEl = document.getElementById('mapEmpty');
+      if (!mapEl || !emptyEl) return;
+
+      if (hasRoute) {
+        mapEl.style.display = 'block';
+        emptyEl.style.display = 'none';
+        if (map) {
+          google.maps.event.trigger(map, 'resize');
+        }
+      } else {
+        mapEl.style.display = 'none';
+        emptyEl.style.display = 'flex';
+      }
     }
 
     function showRouteOnMap(origin, destination, legs) {
       infoWindows.forEach(w => w.close());
       infoWindows = [];
+
+      setRouteMapState(true);
 
       directionsService.route(
         { origin, destination, travelMode: google.maps.TravelMode.TRANSIT },
@@ -985,12 +1121,45 @@
       'public toilet', 'bar', 'night club', 'museum'
     ];
 
+    const POI_COLORS = {
+      coffee: '#6f4e37',
+      restaurant: '#c62828',
+      hotel: '#1565c0',
+      hospital: '#2e7d32',
+      'public toilet': '#6b7280',
+      bar: '#8e24aa',
+      'night club': '#ad1457',
+      museum: '#ef6c00'
+    };
+
     const selectedPoiPlaces = new Map();
     let poiPlaceCache = new Map();
+  let lastPoiDestination = '';
 
     function updatePoiSelectionSummary() {
       const count = selectedPoiPlaces.size;
       document.getElementById('poiSelectionSummary').textContent = `Selected places: ${count}`;
+    }
+
+    function getPoiColor(category) {
+      return POI_COLORS[String(category || '').toLowerCase()] || '#0052cc';
+    }
+
+    function renderPoiLegend(data) {
+      const legendEl = document.getElementById('poiLegend');
+      if (!legendEl) return;
+
+      const categories = (data.categories || [])
+        .map(category => category.category || category.label)
+        .filter(Boolean);
+      const uniqueCategories = [...new Set(categories)];
+
+      legendEl.innerHTML = uniqueCategories.map(category => `
+        <span class="poi-legend-item">
+          <span class="poi-legend-swatch" style="background:${getPoiColor(category)}"></span>
+          ${esc(category)}
+        </span>
+      `).join('');
     }
 
     function togglePoiPlace(placeKey) {
@@ -1107,10 +1276,14 @@
           return;
         }
 
-        statusEl.innerHTML = `<span style="color:#166534;font-weight:600;">Found ${data.categories.reduce((sum, c) => sum + (c.places?.length || 0), 0)} POIs within 500m of ${data.destination}.</span>`;
+        statusEl.innerHTML = `<span style="color:#166534;font-weight:600;">We found ${data.categories.reduce((sum, c) => sum + (c.places?.length || 0), 0)} nearby places around ${data.destination}.</span>`;
         selectedPoiPlaces.clear();
         renderPoiResults(data);
+        renderPoiLegend(data);
         updatePoiSelectionSummary();
+        lastPoiDestination = destination;
+        await loadMapsApi();
+        showPoiOnExistingMap(data);
       } catch (err) {
         statusEl.innerHTML = `<span class="status-error">Request failed: ${err.message}</span>`;
       } finally {
@@ -1255,11 +1428,11 @@
         if (hasPtvData) {
           showRouteOnMap(origin, destination, data.legs);
         } else {
-          document.getElementById('map').outerHTML =
-            `<div id="map" class="map-empty">
-              <div class="map-empty-icon">🗺</div>
-              Map unavailable — PTV stops not found
-            </div>`;
+          setRouteMapState(false);
+        }
+
+        if (destination !== lastPoiDestination && document.querySelector('#poiCategories input:checked')) {
+          await searchTargetPlaces();
         }
 
       } catch (err) {
