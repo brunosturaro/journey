@@ -531,7 +531,7 @@
             <div class="fav-date">Saved ${formatDate(f.createdAt)}</div>
             ${f.places?.length ? `<div class="fav-meta">${f.places.length} saved place${f.places.length !== 1 ? 's' : ''}</div>` : ''}
             <div class="fav-actions">
-              <button class="btn-action plan" onclick="planJourney(${JSON.stringify(f.origin)}, ${JSON.stringify(f.destination)})">Plan</button>
+              <button class="btn-action plan" onclick='planJourney(${JSON.stringify(f.origin)}, ${JSON.stringify(f.destination)}, ${JSON.stringify(f._id)})'>Plan</button>
               <button class="btn-action" onclick="openModal('patch', '${f._id}')">Rename</button>
               <button class="btn-action" onclick="openModal('put', '${f._id}')">Edit All</button>
               <button class="btn-action delete" onclick="deleteFavorite('${f._id}')">Delete</button>
@@ -555,8 +555,8 @@
       });
     }
 
-    function planJourney(origin, destination) {
-      window.location.href = `/?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`;
+    function planJourney(origin, destination, favId) {
+      window.location.href = `/?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&favId=${encodeURIComponent(favId)}`;
     }
 
     // ── Modal ─────────────────────────────────────────────────────────
@@ -593,7 +593,7 @@
         const fav = favorites.find(f => f._id === id);
         if (!fav) return;
         titleEl.textContent = 'Edit Route';
-        subEl.innerHTML = '<span class="method-badge badge-put">PUT</span> Full update — all fields required';
+        subEl.textContent = 'Update name, origin, destination and places.';
         nameInput.value = fav.name;
         originInput.value = fav.origin;
         destInput.value = fav.destination;
@@ -607,7 +607,7 @@
         document.getElementById('mDest').required = true;
       } else if (mode === 'patch') {
         titleEl.textContent = 'Rename Route';
-        subEl.innerHTML = '<span class="method-badge badge-patch">PATCH</span> Partial update — only the name changes';
+        subEl.textContent = 'Change the name of this saved route.';
         const fav = favorites.find(f => f._id === id);
         nameInput.value = fav?.name || '';
         originGroup.style.display = 'none'; destGroup.style.display = 'none';

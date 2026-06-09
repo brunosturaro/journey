@@ -241,99 +241,92 @@
     .search-btn:active { transform: translateY(0); box-shadow: none; }
     .search-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
 
-    .poi-card {
-      background: #eef4ff;
-      border: 1px solid rgba(59, 130, 246, 0.25);
-      border-radius: var(--radius);
-      padding: 24px 26px;
-      margin-bottom: 26px;
-      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
-    }
-    .poi-card .section-head { margin-bottom: 18px; }
-    .poi-card .section-head h2 { color: var(--primary-dark); }
-    .poi-card label { color: var(--primary-dark); }
-    .poi-card .checkbox { color: #ffffff !important; }
-    .checkbox-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
-    }
-    .checkbox {
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-      padding: 16px 18px;
-      background: var(--primary);
-      border: 1px solid rgba(0, 48, 130, 0.35);
-      border-radius: 16px;
-      min-height: 60px;
-      cursor: pointer;
-      user-select: none;
-      font-size: 14px;
-      color: #ffffff;
-      font-weight: 700;
-      letter-spacing: 0.01em;
-      transition: background 0.15s, border-color 0.15s, transform 0.15s, box-shadow 0.15s;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    }
-    .checkbox:hover {
-      background: var(--primary-mid);
-      border-color: rgba(0, 48, 130, 0.6);
-      transform: translateY(-1px);
-    }
-    .checkbox input {
-      width: 20px;
-      height: 20px;
-      accent-color: white;
-      border-radius: 6px;
-    }
-    .checkbox input:checked {
-      filter: none;
-    }
-    .poi-status { margin-top: 10px; min-height: 18px; font-size: 13px; }
-    .poi-selection-summary { margin-top: 10px; font-size: 13px; color: #0f172a; font-weight: 600; }
-    .poi-legend {
-      margin-top: 12px;
+    .poi-filter-row {
       display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .poi-legend-item {
-      display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 6px 10px;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      background: var(--surface);
-      font-size: 12px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      flex-wrap: wrap;
+    }
+    .poi-filter-label {
+      font-size: 10px;
       font-weight: 600;
-      color: var(--text);
+      color: rgba(255,255,255,0.3);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+    .poi-chip-group { display: flex; flex-wrap: wrap; gap: 5px; flex: 1; }
+    .poi-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 9px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 50px;
+      font-size: 11px; font-weight: 500;
+      color: rgba(255,255,255,0.4);
+      cursor: pointer; user-select: none;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    .poi-chip:has(input:checked) {
+      background: rgba(255,205,0,0.1);
+      border-color: rgba(255,205,0,0.25);
+      color: rgba(255,255,255,0.8);
+    }
+    .poi-chip input { width: 11px; height: 11px; accent-color: var(--accent); }
+    .poi-filter-btn {
+      padding: 4px 14px;
+      background: rgba(255,205,0,0.18);
+      border: 1px solid rgba(255,205,0,0.35);
+      border-radius: 50px;
+      color: rgba(255,230,100,0.95);
+      font-size: 11px; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+      white-space: nowrap;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .poi-filter-btn:hover { background: rgba(255,205,0,0.28); border-color: rgba(255,205,0,0.55); color: #ffdd44; }
+    .poi-filter-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .poi-results-section {
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+    .poi-results-title {
+      font-size: 11px; font-weight: 600;
+      color: var(--text-light);
+      text-transform: uppercase; letter-spacing: 0.6px;
+      margin-bottom: 12px;
+    }
+    .poi-status { min-height: 16px; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+    .poi-selection-summary { font-size: 11px; color: var(--text-light); margin-bottom: 8px; }
+    .poi-legend { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+    .poi-legend-item {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 8px; border: 1px solid var(--border);
+      border-radius: 999px; background: var(--surface);
+      font-size: 11px; font-weight: 500; color: var(--text-muted);
     }
     .poi-legend-swatch {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
+      width: 8px; height: 8px; border-radius: 50%;
       border: 1.5px solid rgba(255,255,255,0.85);
-      box-shadow: 0 0 0 1px rgba(0,0,0,0.06);
-      flex-shrink: 0;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.06); flex-shrink: 0;
     }
     .poi-select-btn {
-      margin-top: 10px;
-      border: 1px solid rgba(0, 48, 130, 0.35);
-      background: white;
-      color: var(--primary-dark);
+      margin-top: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text-muted);
       border-radius: 999px;
-      padding: 8px 12px;
-      font-size: 12px;
-      font-weight: 700;
+      padding: 4px 10px;
+      font-size: 11px; font-weight: 600;
       cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
     }
-    .poi-select-btn.selected {
-      background: var(--primary);
-      color: white;
-      border-color: var(--primary);
-    }
+    .poi-select-btn:hover { background: #f0f6ff; color: var(--primary-mid); border-color: #c7d9f5; }
+    .poi-select-btn.selected { background: #e8f0fe; color: var(--primary); border-color: #c5d5f5; }
 
     /* Location button */
     .loc-btn {
@@ -658,38 +651,25 @@
           <button class="search-btn" id="searchBtn" onclick="search()">Search →</button>
         </div>
         <div id="status"></div>
+        <div class="poi-filter-row">
+          <span class="poi-filter-label">Nearby</span>
+          <div id="poiCategories" class="poi-chip-group">
+            <label class="poi-chip"><input type="checkbox" value="coffee" checked><span>Coffee</span></label>
+            <label class="poi-chip"><input type="checkbox" value="restaurant" checked><span>Restaurant</span></label>
+            <label class="poi-chip"><input type="checkbox" value="hotel" checked><span>Hotel</span></label>
+            <label class="poi-chip"><input type="checkbox" value="hospital"><span>Hospital</span></label>
+            <label class="poi-chip"><input type="checkbox" value="public toilet"><span>Toilet</span></label>
+            <label class="poi-chip"><input type="checkbox" value="bar"><span>Bar</span></label>
+            <label class="poi-chip"><input type="checkbox" value="night club"><span>Night club</span></label>
+            <label class="poi-chip"><input type="checkbox" value="museum"><span>Museum</span></label>
+          </div>
+          <button class="poi-filter-btn" id="poiSearchBtn" onclick="searchTargetPlaces()">Find places</button>
+        </div>
       </div>
     </div>
   </header>
 
   <main class="main">
-    <div class="poi-card">
-      <div class="section-head">
-        <h2>Find nearby points of interest</h2>
-        <span class="section-badge">Google Places</span>
-      </div>
-      <div class="form-row">
-        <div class="form-group" style="flex: 1 1 100%; min-width: 220px;">
-          <label>Categories</label>
-          <div class="checkbox-grid" id="poiCategories">
-            <label class="checkbox"><input type="checkbox" value="coffee" checked> Coffee</label>
-            <label class="checkbox"><input type="checkbox" value="restaurant" checked> Restaurant</label>
-            <label class="checkbox"><input type="checkbox" value="hotel" checked> Hotel</label>
-            <label class="checkbox"><input type="checkbox" value="hospital"> Hospital</label>
-            <label class="checkbox"><input type="checkbox" value="public toilet"> Public toilet</label>
-            <label class="checkbox"><input type="checkbox" value="bar"> Bar</label>
-            <label class="checkbox"><input type="checkbox" value="night club"> Night club</label>
-            <label class="checkbox"><input type="checkbox" value="museum"> Museum</label>
-          </div>
-        </div>
-        <button class="search-btn" id="poiSearchBtn" onclick="searchTargetPlaces()">Find nearby places</button>
-      </div>
-      <div id="poiStatus" class="poi-status"></div>
-      <div id="poiSelectionSummary" class="poi-selection-summary">Selected places: 0</div>
-      <div id="poiLegend" class="poi-legend"></div>
-      <div id="poiResults"></div>
-    </div>
-
     <div id="results">
       <!-- Save as Favorite banner -->
       <div class="save-banner" id="saveBanner">
@@ -732,6 +712,19 @@
             <div id="map"></div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <div id="poiSection" style="display:none;">
+      <div class="poi-results-section">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+          <div class="poi-results-title" style="margin-bottom:0;">Nearby places</div>
+          <span id="favAutoSaveIndicator" style="font-size:11px;color:#16a34a;font-weight:500;opacity:0;transition:opacity 0.4s;"></span>
+        </div>
+        <div id="poiStatus" class="poi-status"></div>
+        <div id="poiLegend" class="poi-legend"></div>
+        <div id="poiSelectionSummary" class="poi-selection-summary"></div>
+        <div id="poiResults"></div>
       </div>
     </div>
   </main>
@@ -1177,6 +1170,7 @@
         btn.classList.toggle('selected', selected);
         btn.textContent = selected ? 'Selected' : 'Save place';
       }
+      autoSavePlacesToFav();
     }
 
     document.getElementById('poiResults').addEventListener('click', event => {
@@ -1254,17 +1248,20 @@
       const categories  = getSelectedCategories();
 
       if (!destination) {
-        statusEl.innerHTML = '<span class="status-error">Please enter the destination above.</span>';
+        document.getElementById('poiSection').style.display = 'block';
+        statusEl.innerHTML = '<span style="color:#dc2626;font-size:12px;">Please enter the destination above.</span>';
         return;
       }
       if (categories.length === 0) {
-        statusEl.innerHTML = '<span class="status-error">Select at least one category.</span>';
+        document.getElementById('poiSection').style.display = 'block';
+        statusEl.innerHTML = '<span style="color:#dc2626;font-size:12px;">Select at least one category.</span>';
         return;
       }
 
+      document.getElementById('poiSection').style.display = 'block';
       btn.disabled = true;
-      btn.textContent = 'Finding nearby places…';
-      statusEl.innerHTML = `<span class="status-loading"><span class="spinner"></span>Searching for nearby places…</span>`;
+      btn.textContent = 'Searching…';
+      statusEl.innerHTML = `<span style="color:var(--text-muted);font-size:12px;">Searching nearby places…</span>`;
       resultsEl.innerHTML = '';
 
       try {
@@ -1272,11 +1269,11 @@
         const data = await res.json();
         if (!res.ok) {
           const msg = typeof data.error === 'object' ? JSON.stringify(data.error, null, 2) : data.error;
-          statusEl.innerHTML = `<span class="status-error">${msg}</span>`;
+          statusEl.innerHTML = `<span style="color:#dc2626;font-size:12px;">${msg}</span>`;
           return;
         }
 
-        statusEl.innerHTML = `<span style="color:#166534;font-weight:600;">We found ${data.categories.reduce((sum, c) => sum + (c.places?.length || 0), 0)} nearby places around ${data.destination}.</span>`;
+        statusEl.innerHTML = `<span style="color:#166534;font-size:12px;font-weight:600;">Found ${data.categories.reduce((sum, c) => sum + (c.places?.length || 0), 0)} places near ${data.destination}.</span>`;
         selectedPoiPlaces.clear();
         renderPoiResults(data);
         renderPoiLegend(data);
@@ -1285,10 +1282,10 @@
         await loadMapsApi();
         showPoiOnExistingMap(data);
       } catch (err) {
-        statusEl.innerHTML = `<span class="status-error">Request failed: ${err.message}</span>`;
+        statusEl.innerHTML = `<span style="color:#dc2626;font-size:12px;">Request failed: ${err.message}</span>`;
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Find nearby places';
+        btn.textContent = 'Find places';
       }
     }
 
@@ -1331,18 +1328,23 @@
         ? `<p class="transfer-note">Transfer at <strong>${leg.arrival_stop}</strong></p>`
         : '';
 
-      const disruptionsHtml = (leg.disruptions || []).map(d => {
-        const isDelay = d.type === 'delay' ||
-          /delay|late|minutes?\s+late/i.test((d.title || '') + ' ' + (d.description || ''));
-        return `
-        <div class="alert-bar ${isDelay ? 'alert-delay' : 'alert-disruption'}">
-          <span class="alert-icon">${isDelay ? '🕐' : '⚠️'}</span>
-          <div>
-            <strong>${d.title}</strong>
-            ${d.description ? `<p>${d.description}</p>` : ''}
-          </div>
-        </div>`;
-      }).join('');
+      const disruptions = leg.disruptions || [];
+      const disruptionsHtml = disruptions.length > 0
+        ? disruptions.map(d => {
+            const isDelay = d.type === 'delay' ||
+              /delay|late|minutes?\s+late/i.test((d.title || '') + ' ' + (d.description || ''));
+            return `
+            <div class="alert-bar ${isDelay ? 'alert-delay' : 'alert-disruption'}">
+              <span class="alert-icon">${isDelay ? '🕐' : '⚠️'}</span>
+              <div>
+                <strong>${d.title}</strong>
+                ${d.description ? `<p>${d.description}</p>` : ''}
+              </div>
+            </div>`;
+          }).join('')
+        : ptv?.found && ptv.departures?.length > 0
+          ? `<p style="color:#16a34a;font-size:12px;font-weight:500;margin-top:6px;">Running on time</p>`
+          : '';
 
       return `
       <div class="leg-card">
@@ -1431,10 +1433,6 @@
           setRouteMapState(false);
         }
 
-        if (destination !== lastPoiDestination && document.querySelector('#poiCategories input:checked')) {
-          await searchTargetPlaces();
-        }
-
       } catch (err) {
         statusEl.innerHTML = `<span class="status-error">Request failed: ${err.message}</span>`;
       } finally {
@@ -1444,14 +1442,37 @@
     }
 
     // Pre-fill from URL params (e.g. coming from favorites "Plan" button)
+    const _urlParams = new URLSearchParams(window.location.search);
+    const _favId = _urlParams.get('favId') || null;
+
     (function prefillFromParams() {
-      const params = new URLSearchParams(window.location.search);
-      const o = params.get('origin');
-      const d = params.get('destination');
+      const o = _urlParams.get('origin');
+      const d = _urlParams.get('destination');
       if (o) document.getElementById('origin').value = o;
       if (d) document.getElementById('destination').value = d;
       if (o && d) search();
     })();
+
+    let _autoSaveTimer = null;
+    async function autoSavePlacesToFav() {
+      if (!_favId || !_token) return;
+      clearTimeout(_autoSaveTimer);
+      _autoSaveTimer = setTimeout(async () => {
+        try {
+          await fetch(`/favorites/${_favId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_token}` },
+            body: JSON.stringify({ places: getSelectedPoiPlaces() })
+          });
+          const indicator = document.getElementById('favAutoSaveIndicator');
+          if (indicator) {
+            indicator.textContent = 'Places saved to route';
+            indicator.style.opacity = '1';
+            setTimeout(() => { indicator.style.opacity = '0'; }, 2000);
+          }
+        } catch { /* silent */ }
+      }, 600);
+    }
 
     loadMapsApi();
   </script>

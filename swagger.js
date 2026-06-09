@@ -1,33 +1,34 @@
 const ptvDeparture = {
   type: 'object',
   properties: {
-    route_id:             { type: 'integer',  example: 6 },
-    route_number:         { type: 'string',   example: '78' },
-    route_name:           { type: 'string',   example: 'North Richmond – St Kilda Beach' },
-    platform:             { type: 'string',   example: '1' },
-    scheduled_departure:  { type: 'string',   format: 'date-time' },
-    mins_until:           { type: 'integer',  example: 4 }
+    route_id:            { type: 'integer', example: 6 },
+    route_number:        { type: 'string',  example: '78' },
+    route_name:          { type: 'string',  example: 'North Richmond – St Kilda Beach' },
+    platform:            { type: 'string',  example: '1' },
+    scheduled_departure: { type: 'string',  format: 'date-time' },
+    mins_until:          { type: 'integer', example: 4 }
   }
 };
 
 const alert = {
   type: 'object',
   properties: {
-    type:        { type: 'string', enum: ['delay', 'disruption'], example: 'disruption' },
-    title:       { type: 'string', example: 'Track works at Flinders Street' },
-    description: { type: 'string', example: 'Buses replace trains between Richmond and Flinders Street.' }
+    type:        { type: 'string', enum: ['delay', 'disruption'], example: 'delay' },
+    title:       { type: 'string', example: 'Running 4 min late' },
+    description: { type: 'string', example: 'Expected 08:42 · Scheduled 08:38' }
   }
 };
 
 const favoriteSchema = {
   type: 'object',
   properties: {
-    _id:         { type: 'string',  example: '6679abc123def456' },
-    name:        { type: 'string',  example: 'Home to Work' },
-    origin:      { type: 'string',  example: 'Flinders Street Station, Melbourne' },
-    destination: { type: 'string',  example: 'Richmond Station, Melbourne' },
-    createdAt:   { type: 'string',  format: 'date-time' },
-    updatedAt:   { type: 'string',  format: 'date-time' }
+    _id:         { type: 'string', example: '6679abc123def456' },
+    name:        { type: 'string', example: 'Home to Work' },
+    origin:      { type: 'string', example: 'Flinders Street Station, Melbourne' },
+    destination: { type: 'string', example: 'Richmond Station, Melbourne' },
+    places:      { type: 'array',  items: { type: 'object' }, description: 'Saved nearby POIs' },
+    createdAt:   { type: 'string', format: 'date-time' },
+    updatedAt:   { type: 'string', format: 'date-time' }
   }
 };
 
@@ -45,21 +46,39 @@ const userResponse = {
   }
 };
 
+const apiKeySchema = {
+  type: 'object',
+  properties: {
+    id:        { type: 'string', example: '6679abc123def456' },
+    name:      { type: 'string', example: 'My test key' },
+    key:       { type: 'string', example: 'ptv_a3f9b2c1d4e5f6...' },
+    active:    { type: 'boolean', example: true },
+    createdAt: { type: 'string', format: 'date-time' }
+  }
+};
+
 module.exports = {
   openapi: '3.0.0',
   info: {
-    title: 'Departure Board API',
-    version: '3.0.0',
+    title: 'PTV Journey Planner API',
+    version: '4.0.0',
     description: [
-      'Journey planner combining Google Routes API, PTV Timetable API v3, and a classmate disruptions API.',
+      'RESTful API for the PTV Journey Planner — a Melbourne public transport app.',
       '',
-      '**Authentication**',
-      'Protected routes require a Bearer token. Register or login via `/auth/register` or `/auth/login`,',
-      'then click **Authorize** and enter `Bearer <your_token>`.',
+      '## Authentication',
       '',
-      '**Alert sources**',
-      '- `/journey` and `/board` — alerts come from the classmate\'s API (`GET /train-status/:routeId`).',
-      '- `/common-alerts` — live PTV disruptions via `/v3/disruptions`; intended for classmate consumption.'
+      '**JWT (Bearer Token)** — required for `/favorites` and `/api-keys` routes.',
+      'Register or login via `/auth/register` or `/auth/login`, then click **Authorize** and enter `Bearer <token>`.',
+      '',
+      '**API Key** — required for developer-facing data routes (`/board`, `/common-alerts`, `/ptv-leg`).',
+      'Generate a key via `POST /api-keys` (requires login first), then click **Authorize** and enter the key under **ApiKeyAuth**.',
+      '',
+      '## Delay detection',
+      'Delays are computed by comparing the real-time departure time returned by **Google Routes API**',
+      'against the scheduled departure from **PTV Timetable API v3**. No external alert service required.',
+      '',
+      '## CORS',
+      'Only origins listed in `ALLOWED_ORIGINS` (.env) are permitted. Requests from other origins are blocked.'
     ].join('\n')
   },
   servers: [{ url: 'http://localhost:3000' }],
@@ -69,12 +88,19 @@ module.exports = {
         type: 'http',
         scheme: 'bearer',
         bearerFormat: 'JWT',
-        description: 'JWT token obtained from /auth/login or /auth/register'
+        description: 'JWT token from /auth/login or /auth/register'
+      },
+      ApiKeyAuth: {
+        type: 'apiKey',
+        in: 'header',
+        name: 'X-Api-Key',
+        description: 'API key generated via POST /api-keys (requires login)'
       }
     }
   },
   paths: {
 
+    // ── Auth ──────────────────────────────────────────────────────────
     '/auth/register': {
       post: {
         summary: 'Create a new account',
@@ -131,26 +157,79 @@ module.exports = {
       }
     },
 
+    // ── API Keys ──────────────────────────────────────────────────────
+    '/api-keys': {
+      post: {
+        summary: 'Generate a new API key',
+        description: 'Creates a key tied to your account. The full key value is only returned once — store it.',
+        tags: ['API Keys'],
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['name'],
+                properties: {
+                  name: { type: 'string', example: 'My test key' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          201: { description: 'Key created — includes full key value', content: { 'application/json': { schema: apiKeySchema } } },
+          400: { description: 'name is required' },
+          401: { description: 'Missing or invalid JWT token' },
+          500: { description: 'Server error' }
+        }
+      },
+      get: {
+        summary: 'List your API keys',
+        description: 'Key values are masked after creation (only the first 10 characters are shown).',
+        tags: ['API Keys'],
+        security: [{ BearerAuth: [] }],
+        responses: {
+          200: { description: 'Array of your keys', content: { 'application/json': { schema: { type: 'array', items: apiKeySchema } } } },
+          401: { description: 'Missing or invalid JWT token' },
+          500: { description: 'Server error' }
+        }
+      }
+    },
+
+    '/api-keys/{id}': {
+      delete: {
+        summary: 'Revoke an API key',
+        description: 'Permanently deletes the key. Any request using it will immediately receive 403.',
+        tags: ['API Keys'],
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string' }, example: '6679abc123def456' }
+        ],
+        responses: {
+          204: { description: 'Key revoked (no body)' },
+          401: { description: 'Missing or invalid JWT token' },
+          404: { description: 'Key not found' },
+          500: { description: 'Server error' }
+        }
+      }
+    },
+
+    // ── Favorites ─────────────────────────────────────────────────────
     '/favorites': {
       get: {
-        summary: 'List all saved routes for the logged-in user',
+        summary: 'List all saved routes',
         tags: ['Favorites'],
         security: [{ BearerAuth: [] }],
         responses: {
-          200: {
-            description: 'Array of saved routes',
-            content: {
-              'application/json': {
-                schema: { type: 'array', items: favoriteSchema }
-              }
-            }
-          },
+          200: { description: 'Array of saved routes', content: { 'application/json': { schema: { type: 'array', items: favoriteSchema } } } },
           401: { description: 'Missing or invalid token' },
           500: { description: 'Server error' }
         }
       },
       post: {
-        summary: 'Save a new favourite route',
+        summary: 'Save a new route',
         tags: ['Favorites'],
         security: [{ BearerAuth: [] }],
         requestBody: {
@@ -163,14 +242,15 @@ module.exports = {
                 properties: {
                   name:        { type: 'string', example: 'Home to Work' },
                   origin:      { type: 'string', example: 'Flinders Street Station, Melbourne' },
-                  destination: { type: 'string', example: 'Richmond Station, Melbourne' }
+                  destination: { type: 'string', example: 'Richmond Station, Melbourne' },
+                  places:      { type: 'array', items: { type: 'object' }, description: 'Optional saved POIs' }
                 }
               }
             }
           }
         },
         responses: {
-          201: { description: 'Favourite created', content: { 'application/json': { schema: favoriteSchema } } },
+          201: { description: 'Route saved', content: { 'application/json': { schema: favoriteSchema } } },
           400: { description: 'Missing required fields' },
           401: { description: 'Missing or invalid token' },
           500: { description: 'Server error' }
@@ -180,7 +260,8 @@ module.exports = {
 
     '/favorites/{id}': {
       put: {
-        summary: 'Full update of a saved route (all fields required)',
+        summary: 'Full update of a saved route',
+        description: 'Replaces all fields. All required fields must be provided.',
         tags: ['Favorites'],
         security: [{ BearerAuth: [] }],
         parameters: [
@@ -196,22 +277,24 @@ module.exports = {
                 properties: {
                   name:        { type: 'string', example: 'Home to Work (updated)' },
                   origin:      { type: 'string', example: 'Flinders Street Station, Melbourne' },
-                  destination: { type: 'string', example: 'Southern Cross Station, Melbourne' }
+                  destination: { type: 'string', example: 'Southern Cross Station, Melbourne' },
+                  places:      { type: 'array', items: { type: 'object' } }
                 }
               }
             }
           }
         },
         responses: {
-          200: { description: 'Updated favourite', content: { 'application/json': { schema: favoriteSchema } } },
+          200: { description: 'Updated route', content: { 'application/json': { schema: favoriteSchema } } },
           400: { description: 'Missing required fields' },
           401: { description: 'Missing or invalid token' },
-          404: { description: 'Favourite not found' },
+          404: { description: 'Route not found' },
           500: { description: 'Server error' }
         }
       },
       patch: {
-        summary: 'Partial update of a saved route (only provided fields change)',
+        summary: 'Partial update of a saved route',
+        description: 'Only the fields you provide are changed. Useful for renaming or updating saved places only.',
         tags: ['Favorites'],
         security: [{ BearerAuth: [] }],
         parameters: [
@@ -226,17 +309,18 @@ module.exports = {
                 properties: {
                   name:        { type: 'string', example: 'My Morning Commute' },
                   origin:      { type: 'string', example: 'Flinders Street Station, Melbourne' },
-                  destination: { type: 'string', example: 'Richmond Station, Melbourne' }
+                  destination: { type: 'string', example: 'Richmond Station, Melbourne' },
+                  places:      { type: 'array', items: { type: 'object' } }
                 }
               }
             }
           }
         },
         responses: {
-          200: { description: 'Partially updated favourite', content: { 'application/json': { schema: favoriteSchema } } },
+          200: { description: 'Partially updated route', content: { 'application/json': { schema: favoriteSchema } } },
           400: { description: 'No valid fields provided' },
           401: { description: 'Missing or invalid token' },
-          404: { description: 'Favourite not found' },
+          404: { description: 'Route not found' },
           500: { description: 'Server error' }
         }
       },
@@ -248,33 +332,40 @@ module.exports = {
           { name: 'id', in: 'path', required: true, schema: { type: 'string' }, example: '6679abc123def456' }
         ],
         responses: {
-          204: { description: 'Deleted successfully (no body)' },
+          204: { description: 'Deleted (no body)' },
           401: { description: 'Missing or invalid token' },
-          404: { description: 'Favourite not found' },
+          404: { description: 'Route not found' },
           500: { description: 'Server error' }
         }
       }
     },
 
+    // ── Journey ───────────────────────────────────────────────────────
     '/journey': {
       get: {
-        summary: 'Plan a journey from A to B',
-        description: 'Uses Google Routes API to find the route, then enriches each leg with PTV real-time departures and classmate disruption alerts.',
+        summary: 'Plan a transit journey',
+        description: [
+          'Uses **Google Routes API v2** to compute the best transit route between two Melbourne locations.',
+          'Each leg is enriched with:',
+          '- **PTV real-time departures** (next 5 services from that stop)',
+          '- **Delay detection**: compares Google real-time departure time vs PTV scheduled time'
+        ].join('\n'),
+        tags: ['Journey'],
         parameters: [
-          { name: 'origin',      in: 'query', required: true,  schema: { type: 'string' }, example: 'Flinders Street Station, Melbourne' },
-          { name: 'destination', in: 'query', required: true,  schema: { type: 'string' }, example: 'Richmond Station, Melbourne' }
+          { name: 'origin',      in: 'query', required: true,  schema: { type: 'string' }, example: 'Flinders Street Station' },
+          { name: 'destination', in: 'query', required: true,  schema: { type: 'string' }, example: 'Richmond Station' }
         ],
         responses: {
           200: {
-            description: 'Journey found',
+            description: 'Journey plan with real-time data',
             content: {
               'application/json': {
                 schema: {
                   type: 'object',
                   properties: {
-                    duration_seconds:  { type: 'integer', example: 567 },
-                    distance_meters:   { type: 'integer', example: 2803 },
-                    total_legs:        { type: 'integer', example: 1 },
+                    duration_seconds: { type: 'integer', example: 567 },
+                    distance_meters:  { type: 'integer', example: 2803 },
+                    total_legs:       { type: 'integer', example: 1 },
                     legs: {
                       type: 'array',
                       items: {
@@ -282,23 +373,17 @@ module.exports = {
                         properties: {
                           mode:           { type: 'string', example: 'HEAVY_RAIL' },
                           line:           { type: 'string', example: 'Frankston - City' },
-                          line_short:     { type: 'string', example: 'Frankston' },
                           headsign:       { type: 'string', example: 'Moorabbin' },
                           departure_stop: { type: 'string', example: 'Flinders Street' },
                           arrival_stop:   { type: 'string', example: 'Richmond' },
                           departure_time: { type: 'string', format: 'date-time' },
                           arrival_time:   { type: 'string', format: 'date-time' },
                           num_stops:      { type: 'integer', example: 2 },
-                          ptv: {
-                            type: 'object',
-                            properties: {
-                              found:            { type: 'boolean', example: true },
-                              origin_stop_id:   { type: 'integer', example: 1071 },
-                              origin_stop:      { type: 'string',  example: 'Flinders Street Station' },
-                              primary_route_id: { type: 'integer', example: 6 },
-                              departures: { type: 'array', items: ptvDeparture }
-                            }
-                          },
+                          ptv:            { type: 'object', properties: {
+                            found:        { type: 'boolean', example: true },
+                            origin_stop:  { type: 'string',  example: 'Flinders Street Station' },
+                            departures:   { type: 'array', items: ptvDeparture }
+                          }},
                           disruptions: { type: 'array', items: alert }
                         }
                       }
@@ -317,14 +402,15 @@ module.exports = {
 
     '/autocomplete': {
       get: {
-        summary: 'Autocomplete a place name',
-        description: 'Uses Google Places API to suggest locations biased around Melbourne.',
+        summary: 'Autocomplete a place or stop name',
+        description: 'Uses Google Places Autocomplete API, biased around Melbourne.',
+        tags: ['Journey'],
         parameters: [
           { name: 'input', in: 'query', required: true, schema: { type: 'string' }, example: 'Flinders' }
         ],
         responses: {
           200: {
-            description: 'List of suggestions',
+            description: 'Suggestions list',
             content: {
               'application/json': {
                 schema: {
@@ -352,66 +438,15 @@ module.exports = {
 
     '/target-places': {
       get: {
-        summary: 'Find nearby amenities around a destination',
-        description: 'Uses Google Places API to return nearby points of interest around the target destination within walking distance.',
+        summary: 'Find nearby points of interest',
+        description: 'Uses Google Places Nearby Search to find amenities (cafés, restaurants, hotels, etc.) within walking distance of the destination.',
+        tags: ['Journey'],
         parameters: [
-          { name: 'destination', in: 'query', required: true, schema: { type: 'string' }, example: 'Southern Cross Station, Melbourne' },
-          { name: 'categories', in: 'query', required: false, schema: { type: 'string' }, example: 'coffee,restaurant,hotel' }
+          { name: 'destination', in: 'query', required: true,  schema: { type: 'string' }, example: 'Southern Cross Station, Melbourne' },
+          { name: 'categories',  in: 'query', required: false, schema: { type: 'string' }, example: 'coffee,restaurant,hotel' }
         ],
         responses: {
-          200: {
-            description: 'Nearby places by category',
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    destination: { type: 'string', example: 'Southern Cross Station, Melbourne VIC, Australia' },
-                    location: {
-                      type: 'object',
-                      properties: {
-                        lat: { type: 'number', example: -37.8183 },
-                        lng: { type: 'number', example: 144.9520 }
-                      }
-                    },
-                    categories: {
-                      type: 'array',
-                      items: {
-                        type: 'object',
-                        properties: {
-                          category: { type: 'string', example: 'coffee' },
-                          label: { type: 'string', example: 'Coffee' },
-                          places: {
-                            type: 'array',
-                            items: {
-                              type: 'object',
-                              properties: {
-                                name: { type: 'string', example: 'Brother Baba Budan' },
-                                address: { type: 'string', example: '359 Little Bourke St, Melbourne VIC' },
-                                place_id: { type: 'string', example: 'ChIJ...' },
-                                location: {
-                                  type: 'object',
-                                  properties: {
-                                    lat: { type: 'number', example: -37.814 },
-                                    lng: { type: 'number', example: 144.963 }
-                                  }
-                                },
-                                rating: { type: 'number', example: 4.6 },
-                                user_ratings_total: { type: 'integer', example: 1200 },
-                                open_now: { type: 'boolean', example: true },
-                                distance_meters: { type: 'integer', example: 320 },
-                                walking_minutes: { type: 'integer', example: 4 }
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
+          200: { description: 'Nearby places grouped by category' },
           400: { description: 'Missing destination' },
           404: { description: 'Destination could not be located' },
           500: { description: 'Server error' }
@@ -419,49 +454,20 @@ module.exports = {
       }
     },
 
-    '/ptv-leg': {
-      get: {
-        summary: 'Get upcoming PTV departures from a stop',
-        description: 'Searches PTV for the origin stop by name and returns the next 5 upcoming departures, with route number and minutes until departure.',
-        parameters: [
-          { name: 'origin',     in: 'query', required: true,  schema: { type: 'string' }, example: 'Princes St/Fitzroy St' },
-          { name: 'route_type', in: 'query', required: false, schema: { type: 'integer', enum: [0, 1, 2] }, description: '0=Train  1=Tram  2=Bus', example: 1 }
-        ],
-        responses: {
-          200: {
-            description: 'Upcoming departures from origin stop',
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    found:            { type: 'boolean',  example: true },
-                    origin_stop_id:   { type: 'integer',  example: 2827 },
-                    origin_stop:      { type: 'string',   example: 'Princes St/Fitzroy St' },
-                    primary_route_id: { type: 'integer',  example: 6 },
-                    departures:       { type: 'array',    items: ptvDeparture }
-                  }
-                }
-              }
-            }
-          },
-          404: { description: 'Stop not found on PTV' },
-          500: { description: 'Server error' }
-        }
-      }
-    },
-
+    // ── Developer API (requires API Key) ──────────────────────────────
     '/board/{stop_id}': {
       get: {
-        summary: 'Get departure board for a stop',
-        description: 'Returns stop info, upcoming departures from PTV, and disruption alerts from the classmate API.',
+        summary: 'Departure board for a stop',
+        description: 'Returns stop info and upcoming departures from PTV for the given stop ID. **Requires API Key.**',
+        tags: ['Developer API'],
+        security: [{ ApiKeyAuth: [] }],
         parameters: [
           { name: 'stop_id',    in: 'path',  required: true,  schema: { type: 'integer' }, example: 1071 },
-          { name: 'route_type', in: 'query', required: false, schema: { type: 'integer', enum: [0, 1, 2] }, description: '0=Train  1=Tram  2=Bus', example: 0 }
+          { name: 'route_type', in: 'query', required: false, schema: { type: 'integer', enum: [0, 1, 2] }, description: '0=Train · 1=Tram · 2=Bus', example: 0 }
         ],
         responses: {
           200: {
-            description: 'Stop info with upcoming departures and alerts',
+            description: 'Stop info with departures',
             content: {
               'application/json': {
                 schema: {
@@ -480,22 +486,22 @@ module.exports = {
                       items: {
                         type: 'object',
                         properties: {
-                          route_name:           { type: 'string',  example: 'Frankston' },
-                          route_type:           { type: 'integer', example: 0 },
-                          platform:             { type: 'string',  example: '3' },
-                          scheduled_departure:  { type: 'string',  format: 'date-time' },
-                          estimated_departure:  { type: 'string',  format: 'date-time' },
-                          delay_minutes:        { type: 'integer', example: 2 },
-                          on_time:              { type: 'boolean', example: false }
+                          route_name:          { type: 'string',  example: 'Frankston' },
+                          platform:            { type: 'string',  example: '3' },
+                          scheduled_departure: { type: 'string',  format: 'date-time' },
+                          estimated_departure: { type: 'string',  format: 'date-time' },
+                          delay_minutes:       { type: 'integer', example: 2 },
+                          on_time:             { type: 'boolean', example: false }
                         }
                       }
-                    },
-                    alerts: { type: 'array', items: alert }
+                    }
                   }
                 }
               }
             }
           },
+          401: { description: 'API key missing' },
+          403: { description: 'Invalid or revoked API key' },
           500: { description: 'Server error' }
         }
       }
@@ -503,14 +509,16 @@ module.exports = {
 
     '/common-alerts': {
       get: {
-        summary: 'Live PTV disruptions (for classmate use)',
-        description: 'Returns active disruptions from the PTV `/v3/disruptions` API filtered by route type. Intended to be consumed by a classmate\'s API, not the journey planner frontend.',
+        summary: 'Live PTV disruptions',
+        description: 'Returns active disruptions from PTV `/v3/disruptions`, filtered by route type. **Requires API Key.**',
+        tags: ['Developer API'],
+        security: [{ ApiKeyAuth: [] }],
         parameters: [
-          { name: 'route_type', in: 'query', required: false, schema: { type: 'integer', enum: [0, 1, 2] }, description: '0=Train  1=Tram  2=Bus (default 0)', example: 0 }
+          { name: 'route_type', in: 'query', required: false, schema: { type: 'integer', enum: [0, 1, 2] }, description: '0=Train · 1=Tram · 2=Bus (default 0)', example: 0 }
         ],
         responses: {
           200: {
-            description: 'Active disruptions for the requested route type',
+            description: 'Active disruptions',
             content: {
               'application/json': {
                 schema: {
@@ -525,28 +533,40 @@ module.exports = {
               }
             }
           },
+          401: { description: 'API key missing' },
+          403: { description: 'Invalid or revoked API key' },
           500: { description: 'PTV API error' }
         }
       }
     },
 
+    '/ptv-leg': {
+      get: {
+        summary: 'Upcoming departures from a stop by name',
+        description: 'Searches PTV by stop name and returns the next 5 departures. **Requires API Key.**',
+        tags: ['Developer API'],
+        security: [{ ApiKeyAuth: [] }],
+        parameters: [
+          { name: 'origin',     in: 'query', required: true,  schema: { type: 'string' }, example: 'Princes St/Fitzroy St' },
+          { name: 'route_type', in: 'query', required: false, schema: { type: 'integer', enum: [0, 1, 2] }, description: '0=Train · 1=Tram · 2=Bus', example: 1 }
+        ],
+        responses: {
+          200: { description: 'Departures from the matched stop', content: { 'application/json': { schema: { type: 'object', properties: { found: { type: 'boolean' }, origin_stop: { type: 'string' }, departures: { type: 'array', items: ptvDeparture } } } } } },
+          401: { description: 'API key missing' },
+          403: { description: 'Invalid or revoked API key' },
+          404: { description: 'Stop not found on PTV' },
+          500: { description: 'Server error' }
+        }
+      }
+    },
+
+    // ── Utilities ─────────────────────────────────────────────────────
     '/uuid/generate': {
       get: {
         summary: 'Generate a UUID v4',
+        tags: ['Utilities'],
         responses: {
-          200: {
-            description: 'A new UUID',
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    uuid: { type: 'string', format: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000' }
-                  }
-                }
-              }
-            }
-          }
+          200: { description: 'A new UUID', content: { 'application/json': { schema: { type: 'object', properties: { uuid: { type: 'string', format: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000' } } } } } }
         }
       }
     },
@@ -555,58 +575,31 @@ module.exports = {
       get: {
         summary: 'Validate a UUID v4',
         description: 'Pass the UUID in the `x-uuid` request header.',
+        tags: ['Utilities'],
         parameters: [
           { name: 'x-uuid', in: 'header', required: true, schema: { type: 'string' }, example: '550e8400-e29b-41d4-a716-446655440000' }
         ],
         responses: {
-          200: {
-            description: 'Validation result',
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    uuid:  { type: 'string',  example: '550e8400-e29b-41d4-a716-446655440000' },
-                    valid: { type: 'boolean', example: true }
-                  }
-                }
-              }
-            }
-          },
+          200: { description: 'Validation result', content: { 'application/json': { schema: { type: 'object', properties: { uuid: { type: 'string' }, valid: { type: 'boolean', example: true } } } } } },
           400: { description: 'Missing x-uuid header' }
         }
       }
     },
 
-    '/config': {
+    '/reverse-geocode': {
       get: {
-        summary: 'Get frontend configuration',
-        description: 'Returns the Google Maps JavaScript API key for use in the browser.',
+        summary: 'Convert GPS coordinates to an address',
+        description: 'Uses Google Geocoding API. Powers the "Use my location" button on the frontend.',
+        tags: ['Utilities'],
+        parameters: [
+          { name: 'lat', in: 'query', required: true,  schema: { type: 'number' }, example: -37.8136 },
+          { name: 'lng', in: 'query', required: true,  schema: { type: 'number' }, example: 144.9631 }
+        ],
         responses: {
-          200: {
-            description: 'Frontend config',
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    mapsApiKey: { type: 'string', example: 'AIzaSy...' }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-
-    '/ptv-test': {
-      get: {
-        summary: 'Verify PTV API authentication',
-        description: 'Calls `/v3/route_types` on the PTV API and returns the raw response. Useful for confirming that HMAC signing is working.',
-        responses: {
-          200: { description: 'PTV responded successfully — auth is working' },
-          500: { description: 'PTV authentication failed or network error' }
+          200: { description: 'Address string', content: { 'application/json': { schema: { type: 'object', properties: { address: { type: 'string', example: 'Flinders Street Station, Melbourne VIC 3000, Australia' } } } } } },
+          400: { description: 'lat and lng are required' },
+          404: { description: 'No address found for these coordinates' },
+          500: { description: 'Server error' }
         }
       }
     }

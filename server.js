@@ -5,7 +5,7 @@ const axios = require('axios');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const { getStop, getDepartures, getRoute } = require('./services/ptv');
-const { getAlerts } = require('./services/alerts');
+const { getAlertsFromDeparture } = require('./services/alerts');
 const { getJourney } = require('./services/journey');
 const { getPtvLeg } = require('./services/ptvLeg');
 const { getCommonAlerts } = require('./services/commonAlerts');
@@ -13,8 +13,10 @@ const { getTargetPlaces } = require('./services/places');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./swagger');
 const { v4: uuidv4, validate: uuidValidate } = require('uuid');
-const authRoutes = require('./routes/auth');
+const authRoutes    = require('./routes/auth');
 const favoritesRoutes = require('./routes/favorites');
+const apiKeysRoutes = require('./routes/apiKeys');
+const apiKeyMiddleware = require('./middleware/apiKey');
 
 // MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ptv', { family: 4 })
@@ -23,25 +25,39 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ptv', { f
 
 const app = express();
 
-// CORS — explicit allowed origins, methods and headers
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000').split(',');
+// CORS — only allow requests from known origins
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000')
+  .split(',').map(o => o.trim()).filter(Boolean);
+
 app.use(cors({
-  origin: allowedOrigins,
+  origin: (origin, callback) => {
+    // Allow non-browser requests (Postman, server-to-server) and listed origins
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error(`CORS: origin "${origin}" not allowed`));
+  },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
 
+// Basic security headers
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  next();
+});
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Auth & Favorites routes
+// Auth, Favorites & API Keys routes
 app.use('/auth', authRoutes);
 app.use('/favorites', favoritesRoutes);
+app.use('/api-keys', apiKeysRoutes);
 
 // GET /board/:stop_id?route_type=0
-app.get('/board/:stop_id', async (req, res) => {
+app.get('/board/:stop_id', apiKeyMiddleware, async (req, res) => {
   const stopId = Number(req.params.stop_id);
   const routeType = Number(req.query.route_type ?? 0);
 
@@ -68,7 +84,7 @@ app.get('/board/:stop_id', async (req, res) => {
       };
     }));
 
-    const alerts = await getAlerts(stopId);
+    const alerts = [];
 
     res.json({
       stop: {
@@ -80,6 +96,10 @@ app.get('/board/:stop_id', async (req, res) => {
       alerts
     });
   } catch (err) {
+    const status = err.response?.status;
+    if (status === 403 || status === 404) {
+      return res.status(404).json({ error: `Stop ${req.params.stop_id} not found on PTV for route_type ${req.query.route_type ?? 0}` });
+    }
     res.status(500).json({ error: err.message });
   }
 });
@@ -197,7 +217,7 @@ app.get('/journey', async (req, res) => {
         console.error('[ptv error]', err.response?.data || err.message);
         return { found: false };
       });
-      const disruptions = await getAlerts(ptv?.primary_route_id ?? null).catch(() => []);
+      const disruptions = getAlertsFromDeparture(leg.departure_time, ptv?.departures?.[0]?.scheduled_departure);
       return { ...leg, ptv, disruptions };
     }));
 
@@ -210,7 +230,7 @@ app.get('/journey', async (req, res) => {
 });
 
 // GET /common-alerts?route_type=0
-app.get('/common-alerts', async (req, res) => {
+app.get('/common-alerts', apiKeyMiddleware, async (req, res) => {
   const routeType = Number(req.query.route_type ?? 0);
   try {
     const { alerts } = await getCommonAlerts(routeType);
@@ -226,7 +246,7 @@ app.get('/common-alerts', async (req, res) => {
 });
 
 // GET /ptv-leg?origin=...&destination=...&route_type=0
-app.get('/ptv-leg', async (req, res) => {
+app.get('/ptv-leg', apiKeyMiddleware, async (req, res) => {
   const { origin, destination, route_type } = req.query;
   if (!origin || !destination) {
     return res.status(400).json({ error: 'origin and destination are required' });

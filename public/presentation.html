@@ -54,82 +54,149 @@
     }
     .dot.active { background: #58a6ff; }
 
-    /* ─── Slide 1: Title ─── */
-    .s1 { background: linear-gradient(135deg, #0d1117 0%, #161b22 100%); }
+    h2 { font-size: 36px; margin-bottom: 40px; }
+    .muted { color: #8b949e; }
+
+    /* Cards */
+    .card-row { display: flex; gap: 18px; max-width: 960px; width: 100%; }
+    .card {
+      flex: 1; background: #161b22; border: 1px solid #30363d;
+      border-radius: 12px; padding: 24px; text-align: left;
+    }
+    .card .icon { font-size: 28px; margin-bottom: 12px; }
+    .card h3 { font-size: 15px; margin-bottom: 8px; }
+    .card p  { font-size: 13px; color: #8b949e; line-height: 1.6; }
+    .card.blue  { border-color: #1f6feb; background: #0d2044; }
+    .card.green { border-color: #238636; background: #0d2a10; }
+    .card.red   { border-color: #da3633; background: #2a0d0d; }
+
+    /* ── Slide 1: Title ── */
+    .s1 { background: linear-gradient(135deg, #0d1117 0%, #0d2044 100%); }
     .s1 .tag {
       background: #1f6feb; color: #fff; font-size: 12px; font-weight: 700;
       padding: 4px 14px; border-radius: 20px; letter-spacing: 1px;
       margin-bottom: 24px; text-transform: uppercase;
     }
-    .s1 h1 { font-size: 54px; font-weight: 700; line-height: 1.15; margin-bottom: 16px; }
+    .s1 h1 { font-size: 52px; font-weight: 700; line-height: 1.15; margin-bottom: 16px; }
     .s1 h1 span { color: #58a6ff; }
-    .s1 p { font-size: 20px; color: #8b949e; max-width: 560px; line-height: 1.5; }
-    .s1 .names { margin-top: 40px; font-size: 15px; color: #6e7681; }
+    .s1 .sub { font-size: 18px; color: #8b949e; max-width: 560px; line-height: 1.6; }
+    .s1 .tech-row { display: flex; gap: 10px; margin-top: 36px; flex-wrap: wrap; justify-content: center; }
+    .tech-pill {
+      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+      padding: 5px 14px; border-radius: 20px; font-size: 12px; color: #8b949e;
+    }
 
-    /* ─── Slide 2: What it does ─── */
+    /* ── Slide 2: Problem ── */
     .s2 { background: #0d1117; }
-    .s2 h2 { font-size: 38px; margin-bottom: 48px; }
-    .feature-row { display: flex; gap: 20px; max-width: 900px; }
-    .feat {
-      flex: 1; background: #161b22; border: 1px solid #30363d;
-      border-radius: 12px; padding: 24px; text-align: left;
+    .problem-box {
+      max-width: 700px; width: 100%;
+      background: #161b22; border: 1px solid #da3633;
+      border-radius: 14px; padding: 36px; text-align: left;
     }
-    .feat .num {
-      width: 36px; height: 36px; border-radius: 50%;
-      background: #1f6feb; color: #fff; font-weight: 700; font-size: 16px;
-      display: flex; align-items: center; justify-content: center; margin-bottom: 14px;
+    .problem-box .label {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; color: #f85149; margin-bottom: 16px;
     }
-    .feat h3 { font-size: 15px; margin-bottom: 8px; }
-    .feat p { font-size: 13px; color: #8b949e; line-height: 1.5; }
+    .problem-box h3 { font-size: 22px; line-height: 1.4; margin-bottom: 20px; }
+    .problem-box ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .problem-box li { font-size: 14px; color: #8b949e; display: flex; gap: 10px; align-items: flex-start; }
+    .problem-box li::before { content: '✗'; color: #f85149; flex-shrink: 0; font-weight: 700; }
 
-    /* ─── Slide 4: Architecture ─── */
+    /* ── Slide 3: Solution ── */
+    .s3 { background: #0d1117; }
+    .solution-box {
+      max-width: 700px; width: 100%;
+      background: #161b22; border: 1px solid #238636;
+      border-radius: 14px; padding: 36px; text-align: left;
+    }
+    .solution-box .label {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; color: #3fb950; margin-bottom: 16px;
+    }
+    .solution-box h3 { font-size: 22px; line-height: 1.4; margin-bottom: 20px; }
+    .solution-box ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .solution-box li { font-size: 14px; color: #8b949e; display: flex; gap: 10px; align-items: flex-start; }
+    .solution-box li::before { content: '✓'; color: #3fb950; flex-shrink: 0; font-weight: 700; }
+
+    /* ── Slide 4: Features ── */
     .s4 { background: #0d1117; }
-    .s4 h2 { font-size: 38px; margin-bottom: 44px; }
-    .arch {
-      display: flex; align-items: center; gap: 0; max-width: 900px;
-      flex-wrap: wrap; justify-content: center; gap: 0;
-    }
+
+    /* ── Slide 5: Architecture ── */
+    .s5 { background: #0d1117; }
+    .arch { display: flex; align-items: center; gap: 0; max-width: 960px; flex-wrap: wrap; justify-content: center; }
     .arch-box {
-      background: #161b22; border: 1px solid #30363d; border-radius: 10px;
-      padding: 18px 22px; text-align: center; min-width: 140px;
+      background: #161b22; border: 1px solid #30363d;
+      border-radius: 10px; padding: 18px 22px; text-align: center; min-width: 130px;
     }
-    .arch-box .icon { font-size: 28px; margin-bottom: 8px; }
-    .arch-box h4 { font-size: 13px; font-weight: 700; margin-bottom: 4px; color: #e6edf3; }
-    .arch-box p { font-size: 11px; color: #8b949e; }
+    .arch-box .icon { font-size: 26px; margin-bottom: 8px; }
+    .arch-box h4 { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+    .arch-box p  { font-size: 11px; color: #8b949e; }
     .arch-box.highlight { border-color: #1f6feb; background: #0d2044; }
+    .arch-col { display: flex; flex-direction: column; gap: 10px; }
     .arrow { font-size: 22px; color: #30363d; padding: 0 8px; }
 
-    /* ─── Slide 5: APIs ─── */
-    .s5 { background: #0d1117; }
-    .s5 h2 { font-size: 38px; margin-bottom: 44px; }
-    .api-list { display: flex; flex-direction: column; gap: 14px; max-width: 700px; width: 100%; }
+    /* ── Slide 6: APIs ── */
+    .s6 { background: #0d1117; }
+    .api-list { display: flex; flex-direction: column; gap: 10px; max-width: 720px; width: 100%; }
     .api-item {
-      display: flex; align-items: center; gap: 16px;
-      background: #161b22; border: 1px solid #30363d; border-radius: 10px;
-      padding: 16px 20px;
+      display: flex; align-items: flex-start; gap: 16px;
+      background: #161b22; border: 1px solid #30363d;
+      border-radius: 10px; padding: 14px 18px;
     }
     .api-badge {
-      font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px;
-      white-space: nowrap; flex-shrink: 0;
+      font-size: 11px; font-weight: 700; padding: 3px 10px;
+      border-radius: 20px; white-space: nowrap; flex-shrink: 0; margin-top: 3px;
     }
     .badge-google { background: #0a3069; color: #58a6ff; }
     .badge-ptv    { background: #1a3a1a; color: #3fb950; }
-    .badge-class  { background: #3a1a2e; color: #f778ba; }
-    .api-item h4 { font-size: 14px; margin-bottom: 3px; }
+    .api-item h4 { font-size: 14px; margin-bottom: 2px; }
     .api-item p  { font-size: 12px; color: #8b949e; }
 
-    /* ─── Slide 6: Live Demo ─── */
-    .s6 { background: linear-gradient(135deg, #0d1117 0%, #0d2044 100%); }
-    .s6 h2 { font-size: 48px; margin-bottom: 16px; }
-    .s6 .sub { font-size: 20px; color: #8b949e; margin-bottom: 48px; }
-    .demo-link {
-      display: inline-block;
-      background: #1f6feb; color: #fff; text-decoration: none;
-      padding: 16px 40px; border-radius: 8px; font-size: 18px; font-weight: 600;
-      transition: background 0.2s;
+    /* ── Slide 7: Security ── */
+    .s7 { background: #0d1117; }
+    .sec-list { display: flex; flex-direction: column; gap: 12px; max-width: 720px; width: 100%; }
+    .sec-item {
+      display: flex; align-items: flex-start; gap: 16px;
+      background: #161b22; border: 1px solid #30363d;
+      border-radius: 10px; padding: 16px 20px; text-align: left;
     }
-    .demo-link:hover { background: #388bfd; }
-    .s6 .tip { margin-top: 24px; font-size: 13px; color: #6e7681; }
+    .sec-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+    .sec-item h4 { font-size: 14px; margin-bottom: 4px; }
+    .sec-item p  { font-size: 12px; color: #8b949e; line-height: 1.5; }
+
+    /* ── Slide 8: Criteria ── */
+    .s8 { background: #0d1117; }
+    .criteria-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 12px; max-width: 800px; width: 100%;
+    }
+    .crit {
+      display: flex; align-items: flex-start; gap: 12px;
+      background: #161b22; border: 1px solid #30363d;
+      border-radius: 10px; padding: 14px 16px; text-align: left;
+    }
+    .crit-check {
+      width: 22px; height: 22px; border-radius: 50%;
+      background: #238636; display: flex; align-items: center; justify-content: center;
+      font-size: 12px; flex-shrink: 0; margin-top: 1px;
+    }
+    .crit h4 { font-size: 13px; font-weight: 700; margin-bottom: 3px; }
+    .crit p  { font-size: 11px; color: #8b949e; line-height: 1.4; }
+
+    /* ── Slide 9: Demo ── */
+    .s9 { background: linear-gradient(135deg, #0d1117 0%, #0d2044 100%); }
+    .s9 h2 { font-size: 48px; margin-bottom: 12px; }
+    .s9 .sub { font-size: 18px; color: #8b949e; margin-bottom: 44px; }
+    .demo-links { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+    .demo-link {
+      display: inline-block; text-decoration: none;
+      padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;
+      transition: opacity 0.2s;
+    }
+    .demo-link:hover { opacity: 0.85; }
+    .demo-link.primary { background: #1f6feb; color: #fff; }
+    .demo-link.secondary { background: #161b22; color: #e6edf3; border: 1px solid #30363d; }
+    .s9 .tip { margin-top: 28px; font-size: 13px; color: #6e7681; }
   </style>
 </head>
 <body>
@@ -138,77 +205,116 @@
 
   <!-- Slide 1: Title -->
   <div class="slide s1 active">
-    <div class="tag">Hackathon 2025</div>
+    <div class="tag">Web Dev · 2026</div>
     <h1>PTV Journey <span>Planner</span></h1>
-    <p>Real-time public transport journey planning for Melbourne, powered by Google and PTV APIs.</p>
+    <p class="sub">A real-time public transport planning app for Melbourne, combining Google APIs, PTV live data, and a full RESTful backend.</p>
+    <div class="tech-row">
+      <span class="tech-pill">Node.js + Express</span>
+      <span class="tech-pill">MongoDB</span>
+      <span class="tech-pill">Google APIs</span>
+      <span class="tech-pill">PTV API v3</span>
+      <span class="tech-pill">JWT Auth</span>
+      <span class="tech-pill">API Keys</span>
+    </div>
   </div>
 
-  <!-- Slide 2: What it does -->
+  <!-- Slide 2: The Problem -->
   <div class="slide s2">
-    <h2>What it does</h2>
-    <div class="feature-row">
-      <div class="feat">
-        <div class="num">1</div>
-        <h3>Search any destination</h3>
-        <p>Type any Melbourne address or stop — autocomplete finds it instantly via Google Places.</p>
+    <h2>The Problem</h2>
+    <div class="problem-box">
+      <div class="label">Pain point</div>
+      <h3>Melbourne commuters juggle multiple disconnected apps just to complete one journey.</h3>
+      <ul>
+        <li>No single tool handles route planning, live departure tracking, and nearby places together — you're constantly switching apps</li>
+        <li>Regular commuters can't save their daily route anywhere — they repeat the exact same search every single day</li>
+        <li>Multi-leg journeys (train + tram + bus) are fragmented — each leg is managed in a different place with no unified view</li>
+        <li>Finding a café or restaurant near your destination means leaving the transport app entirely and starting over</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Slide 3: The Solution -->
+  <div class="slide s3">
+    <h2>The Solution</h2>
+    <div class="solution-box">
+      <div class="label">What I built</div>
+      <h3>A journey planner that combines routing, live departures, delays, and nearby places — all in one page.</h3>
+      <ul>
+        <li>Real-time routing computes the best transit path, broken into individual legs (train, tram, bus)</li>
+        <li>Delays are detected automatically by comparing live arrival data against the official timetable</li>
+        <li>Users can save their favourite routes and reopen them with one click — no re-searching</li>
+        <li>Nearby points of interest (cafés, restaurants, hotels) shown on the same map, no extra app needed</li>
+        <li>Full RESTful API with JWT authentication, API keys, CORS, and proper HTTP error codes</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Slide 4: Features -->
+  <div class="slide s4">
+    <h2>Key Features</h2>
+    <div class="card-row">
+      <div class="card">
+        <div class="icon">🗺️</div>
+        <h3>Journey Planning</h3>
+        <p>Type any origin and destination — autocomplete finds it, the route is planned and broken into individual train/tram/bus legs.</p>
       </div>
-      <div class="feat">
-        <div class="num">2</div>
-        <h3>Plan your journey</h3>
-        <p>Google Routes finds the best transit path, breaking it into legs — train, tram, or bus.</p>
+      <div class="card">
+        <div class="icon">🚆</div>
+        <h3>Live Departures + Delays</h3>
+        <p>Each leg shows upcoming departures. If real-time data differs from the official timetable, a delay alert appears automatically.</p>
       </div>
-      <div class="feat">
-        <div class="num">3</div>
-        <h3>Real-time departures</h3>
-        <p>Each leg shows the next 5 departures from PTV, with route number and minutes until departure.</p>
+      <div class="card">
+        <div class="icon">⭐</div>
+        <h3>Saved Routes</h3>
+        <p>Login to save your frequent journeys. Click Plan to reopen any route instantly, with optional nearby places attached.</p>
       </div>
-      <div class="feat">
-        <div class="num">4</div>
-        <h3>Live alerts</h3>
-        <p>Delays and disruptions are shown per leg, so you know before you leave.</p>
+      <div class="card">
+        <div class="icon">📍</div>
+        <h3>Nearby Places</h3>
+        <p>After planning a route, find cafés, restaurants, hotels or hospitals near your destination — shown on the same map.</p>
       </div>
     </div>
   </div>
 
-  <!-- Slide 4: Architecture -->
-  <div class="slide s4">
+  <!-- Slide 5: Architecture -->
+  <div class="slide s5">
     <h2>Architecture</h2>
     <div class="arch">
       <div class="arch-box">
         <div class="icon">🖥️</div>
         <h4>Browser</h4>
-        <p>index.html</p>
+        <p>HTML · CSS · JS</p>
       </div>
       <div class="arrow">→</div>
       <div class="arch-box highlight">
         <div class="icon">⚙️</div>
         <h4>Node / Express</h4>
-        <p>Our backend</p>
+        <p>REST API backend</p>
       </div>
       <div class="arrow">→</div>
-      <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="arch-col">
         <div class="arch-box">
           <div class="icon">🗺️</div>
           <h4>Google APIs</h4>
-          <p>Routes · Places · Maps</p>
+          <p>Routes · Places · Maps · Geocoding</p>
         </div>
         <div class="arch-box">
           <div class="icon">🚆</div>
           <h4>PTV API v3</h4>
-          <p>Timetable · Disruptions</p>
+          <p>Live timetables · HMAC-SHA1 signed</p>
         </div>
         <div class="arch-box">
-          <div class="icon">🚨</div>
-          <h4>Alerts API</h4>
-          <p>Delays · Disruptions</p>
+          <div class="icon">🗄️</div>
+          <h4>MongoDB Atlas</h4>
+          <p>Users · Saved routes · API keys</p>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Slide 5: APIs Used -->
-  <div class="slide s5">
-    <h2>APIs Used</h2>
+  <!-- Slide 6: External APIs -->
+  <div class="slide s6">
+    <h2>External APIs</h2>
     <div class="api-list">
       <div class="api-item">
         <span class="api-badge badge-google">Google</span>
@@ -221,39 +327,126 @@
         <span class="api-badge badge-google">Google</span>
         <div>
           <h4>Routes API v2</h4>
-          <p>Computes the optimal transit journey with walking legs.</p>
+          <p>Computes the optimal transit journey with real-time departure times.</p>
         </div>
       </div>
       <div class="api-item">
         <span class="api-badge badge-google">Google</span>
         <div>
-          <h4>Maps JavaScript API</h4>
-          <p>Renders the route on an interactive map with stop markers.</p>
+          <h4>Maps JavaScript API + Nearby Search</h4>
+          <p>Interactive map with route and POI markers; finds nearby amenities.</p>
+        </div>
+      </div>
+      <div class="api-item">
+        <span class="api-badge badge-google">Google</span>
+        <div>
+          <h4>Geocoding API</h4>
+          <p>Converts GPS coordinates to address — powers the "Use my location" button.</p>
         </div>
       </div>
       <div class="api-item">
         <span class="api-badge badge-ptv">PTV</span>
         <div>
           <h4>PTV Timetable API v3</h4>
-          <p>Provides real-time departure times for each leg (HMAC-SHA1 signed).</p>
-        </div>
-      </div>
-      <div class="api-item">
-        <span class="api-badge badge-class">Alerts</span>
-        <div>
-          <h4>Alerts API</h4>
-          <p>Returns delay minutes and disruption alerts per route.</p>
+          <p>Live departure times and disruptions for every train, tram and bus stop in Melbourne.</p>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Slide 6: Demo -->
-  <div class="slide s6">
+  <!-- Slide 7: Security -->
+  <div class="slide s7">
+    <h2>API Security</h2>
+    <div class="sec-list">
+      <div class="sec-item">
+        <div class="sec-icon">🔐</div>
+        <div>
+          <h4>JWT Authentication</h4>
+          <p>All user-specific routes (saved routes, API keys) require a Bearer token. Tokens are signed with a secret and expire automatically.</p>
+        </div>
+      </div>
+      <div class="sec-item">
+        <div class="sec-icon">🗝️</div>
+        <div>
+          <h4>API Key System</h4>
+          <p>Developer-facing routes (<code>/board</code>, <code>/common-alerts</code>, <code>/ptv-leg</code>) require an <code>X-Api-Key</code> header. Keys are stored in MongoDB and can be revoked at any time.</p>
+        </div>
+      </div>
+      <div class="sec-item">
+        <div class="sec-icon">🌐</div>
+        <div>
+          <h4>CORS Policy</h4>
+          <p>Only origins listed in <code>ALLOWED_ORIGINS</code> (.env) can call the API. Requests from any other domain are rejected by the browser.</p>
+        </div>
+      </div>
+      <div class="sec-item">
+        <div class="sec-icon">🛡️</div>
+        <div>
+          <h4>Security Headers</h4>
+          <p><code>X-Content-Type-Options: nosniff</code> and <code>X-Frame-Options: DENY</code> added to every response to prevent common browser attacks.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 8: Criteria Met -->
+  <div class="slide s8">
+    <h2>Assessment Criteria</h2>
+    <div class="criteria-grid">
+      <div class="crit">
+        <div class="crit-check">✓</div>
+        <div>
+          <h4>RESTful API — GET, POST, PUT, PATCH, DELETE</h4>
+          <p>Full CRUD on saved routes. All 5 HTTP methods implemented with correct semantics.</p>
+        </div>
+      </div>
+      <div class="crit">
+        <div class="crit-check">✓</div>
+        <div>
+          <h4>HTTP Error Codes</h4>
+          <p>400, 401, 403, 404, 409, 204, 201, 500 — all returned with descriptive JSON error messages.</p>
+        </div>
+      </div>
+      <div class="crit">
+        <div class="crit-check">✓</div>
+        <div>
+          <h4>External API</h4>
+          <p>Google Routes, Places, Maps, Geocoding + PTV Timetable API v3 (HMAC-SHA1 signed).</p>
+        </div>
+      </div>
+      <div class="crit">
+        <div class="crit-check">✓</div>
+        <div>
+          <h4>API Security / CORS</h4>
+          <p>JWT auth, API key middleware, CORS origin whitelist, and security response headers.</p>
+        </div>
+      </div>
+      <div class="crit">
+        <div class="crit-check">✓</div>
+        <div>
+          <h4>Database</h4>
+          <p>MongoDB Atlas — stores users, saved routes (with POIs), and API keys.</p>
+        </div>
+      </div>
+      <div class="crit">
+        <div class="crit-check">✓</div>
+        <div>
+          <h4>At least 4 web pages</h4>
+          <p>Journey Planner · Saved Routes · Login · Register · Presentation · API Docs (Swagger)</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 9: Demo -->
+  <div class="slide s9">
     <h2>Live Demo</h2>
     <p class="sub">Let's see it in action.</p>
-    <a class="demo-link" href="/" target="_blank">Open Journey Planner →</a>
-    <p class="tip">Also available at <strong>http://localhost:3000</strong></p>
+    <div class="demo-links">
+      <a class="demo-link primary" href="http://localhost:3000/" target="_blank">Open Journey Planner →</a>
+      <a class="demo-link secondary" href="http://localhost:3000/api-docs" target="_blank">View API Docs →</a>
+    </div>
+    <p class="tip">Running at <strong>http://localhost:3000</strong></p>
   </div>
 
 </div>
@@ -264,16 +457,15 @@
 <!-- Nav -->
 <div class="nav">
   <button id="prevBtn" onclick="go(-1)" disabled>← Prev</button>
-  <span class="slide-counter" id="counter">1 / 6</span>
+  <span class="slide-counter" id="counter">1 / 9</span>
   <button id="nextBtn" onclick="go(1)">Next →</button>
 </div>
 
 <script>
   const slides = document.querySelectorAll('.slide');
-  const total = slides.length;
-  let current = 0;
+  const total  = slides.length;
+  let current  = 0;
 
-  // Build dots
   const dotsEl = document.getElementById('dots');
   slides.forEach((_, i) => {
     const d = document.createElement('div');
