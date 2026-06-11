@@ -65,6 +65,7 @@ async function getPtvLeg(origin, routeType = 0, lineShort = '', fromTime = null)
         route_name: routeInfo.route_name,
         platform: dep.platform_number,
         scheduled_departure: dep.scheduled_departure_utc,
+        real_time_departure: dep.estimated_departure_utc || null,
         mins_until: minsUntil,
         _scheduledMs: scheduledMs
       };

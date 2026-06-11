@@ -19,6 +19,7 @@
     "uuid": "^14.0.0"
   },
   "devDependencies": {
+    "marked": "^18.0.5",
     "puppeteer-core": "^25.1.0"
   }
 }

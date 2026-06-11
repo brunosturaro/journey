@@ -217,8 +217,13 @@ app.get('/journey', async (req, res) => {
         console.error('[ptv error]', err.response?.data || err.message);
         return { found: false };
       });
-      const disruptions = getAlertsFromDeparture(leg.departure_time, ptv?.departures?.[0]?.scheduled_departure);
-      return { ...leg, ptv, disruptions };
+      if (ptv?.departures) {
+        ptv.departures = ptv.departures.map(dep => ({
+          ...dep,
+          delay: getAlertsFromDeparture(dep.real_time_departure, dep.scheduled_departure)[0] || null
+        }));
+      }
+      return { ...leg, ptv };
     }));
 
     res.json({ ...journey, legs: enrichedLegs });

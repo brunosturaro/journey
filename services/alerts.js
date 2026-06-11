@@ -25,7 +25,8 @@ function getAlertsFromDeparture(googleDepartureTime, ptvScheduledTime) {
     return [{
       type: 'delay',
       title: `Running ${delayMinutes} min late`,
-      description: `Expected ${formatTime(googleMs)} · Scheduled ${formatTime(ptvMs)}`
+      description: `Expected ${formatTime(googleMs)} · Scheduled ${formatTime(ptvMs)}`,
+      delay_minutes: delayMinutes
     }];
   }
 
